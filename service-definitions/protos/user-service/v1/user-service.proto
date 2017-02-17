@@ -1,0 +1,31 @@
+syntax = "proto3";
+option go_package = "proxy";
+
+service UserService {
+  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse) {}
+  rpc AuthenticateUser (AuthenticateUserRequest) returns (AuthenticateUserResponse) {}  
+}
+
+message RegisterUserRequest {
+  string FirstName = 1;
+  string LastName = 2;
+  string Login = 3;
+  string Password = 4;
+  string Pin = 5;
+}
+
+message RegisterUserResponse {
+  string VerificationLink = 1;
+}
+
+message AuthenticateUserRequest {
+  string Login = 1;
+  string Password = 2;
+  string Pin = 5;
+}
+
+message AuthenticateUserResponse {
+  string Login = 1;
+  string FirstName = 2;
+  string LastName = 3;
+}
