@@ -9,6 +9,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	es "github.com/gkarlik/expense-tracker/api-gateway/proxy/expense-service/v1"
 	us "github.com/gkarlik/expense-tracker/api-gateway/proxy/user-service/v1"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
@@ -83,7 +84,28 @@ func getUserServiceConn() (*grpc.ClientConn, error) {
 			"error":     err,
 			"component": componentName,
 			"address":   url,
-		}, "Cannot dial provided address")
+		}, "Cannot dial address provided for UserService")
+		return nil, err
+	}
+	return conn, err
+}
+
+func getExpenseServiceConn() (*grpc.ClientConn, error) {
+	url, err := srv.Discovery().GetServiceAddress(sd.ByName("ExpenseService"), sd.ByVersion("v1"))
+	if err != nil || url == nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot locate ExpenseService")
+		return nil, err
+	}
+	conn, err := grpc.Dial(url.String(), grpc.WithInsecure())
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+			"address":   url,
+		}, "Cannot dial address provided for ExpenseService")
 		return nil, err
 	}
 	return conn, err
@@ -131,8 +153,13 @@ func main() {
 	rl := ratelimiter.NewHTTPRateLimiter(100 * time.Millisecond)
 
 	r := mux.NewRouter()
+	// user service
 	r.Handle("/login", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
 	r.Handle("/register", rl.Handle(http.HandlerFunc(registerUserHandler))).Methods(http.MethodPost)
+
+	// expense service
+	r.Handle("/expense/update", rl.Handle(http.HandlerFunc(updateExpenseHandler))).Methods(http.MethodPost)
+	r.Handle("/category/update", rl.Handle(http.HandlerFunc(updateCategoryHandler))).Methods(http.MethodPost)
 
 	srv.Log().InfoWithFields(logger.Fields{
 		"addr": srv.Info().Address.String(),
@@ -179,4 +206,102 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func updateExpenseHandler(w http.ResponseWriter, r *http.Request) {
+	var expense es.ExpenseRequest
+
+	b, _ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(b, &expense)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot process expense update request")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	conn, err := getExpenseServiceConn()
+	if err != nil || conn == nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot connect to ExpenseService")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	expenseService := es.NewExpenseServiceClient(conn)
+	e, err := expenseService.UpdateExpense(context.Background(), &expense)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot update expense")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(e)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot send JSON reponse")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+func updateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	var category es.CategoryRequest
+
+	b, _ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(b, &category)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot process expense update request")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	conn, err := getExpenseServiceConn()
+	if err != nil || conn == nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot connect to ExpenseService")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	expenseService := es.NewExpenseServiceClient(conn)
+	c, err := expenseService.UpdateCategory(context.Background(), &category)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot update expense")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		srv.Log().ErrorWithFields(logger.Fields{
+			"error":     err,
+			"component": componentName,
+		}, "Cannot send JSON reponse")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
 }
