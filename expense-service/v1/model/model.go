@@ -9,22 +9,22 @@ import (
 type Category struct {
 	rdbms.Entity
 
-	ID       uint `gorm:"primary_key"`
-	Limit    float64
+	ID       uint32 `gorm:"primary_key"`
+	Limit    float32
 	Name     string
 	Expenses []Expense
-	UserID   uint
+	UserID   uint32
 }
 
 type Expense struct {
 	rdbms.Entity
 
-	ID         uint `gorm:"primary_key"`
+	ID         uint32 `gorm:"primary_key"`
 	Date       time.Time
-	Value      float64
+	Value      float32
 	Category   Category
-	CategoryID uint
-	UserID     uint
+	CategoryID uint32
+	UserID     uint32
 }
 
 type CategoryRepository struct {
@@ -40,7 +40,7 @@ func NewCategoryRepository(c rdbms.DbContext) *CategoryRepository {
 	return repo
 }
 
-func (cr *CategoryRepository) FindByUserID(userID uint) ([]Category, error) {
+func (cr *CategoryRepository) FindByUserID(userID uint32) ([]Category, error) {
 	var categories []Category
 	if err := cr.Find(&categories, Category{UserID: userID}); err != nil {
 		return nil, err
@@ -61,10 +61,13 @@ func NewExpenseRepository(c rdbms.DbContext) *ExpenseRepository {
 	return repo
 }
 
-func (er *ExpenseRepository) FindByUserID(userID uint) ([]Expense, error) {
-	var expenses []Expense
-	if err := er.Find(&expenses, Expense{UserID: userID}); err != nil {
+func (er *ExpenseRepository) FindByID(id uint32) (*Expense, error) {
+	var expense Expense
+
+	context := er.Context().(*gorm.DbContext)
+
+	if err := context.DB.Preload("Category").First(&expense, Expense{ID: id}).Error; err != nil {
 		return nil, err
 	}
-	return expenses, nil
+	return &expense, nil
 }
