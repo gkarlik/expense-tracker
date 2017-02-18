@@ -1,0 +1,76 @@
+syntax = "proto3";
+option go_package = "proxy";
+
+service ExpenseService {
+    rpc GetExpense (ExpenseIDRequest) returns (ExpenseResponse) {}
+    rpc UpdateExpense (ExpenseRequest) returns (ExpenseResponse) {}
+    rpc RemoveExpense (ExpenseIDRequest) returns (DeleteExpenseResponse) {}
+    rpc GetUserExpenses (UserPagingRequest) returns (ExpensesReponse) {}
+
+    rpc GetCategory (CategoryIDRequest) returns (CategoryResponse) {}
+    rpc UpdateCategory (CategoryRequest) returns (CategoryResponse) {}
+    rpc RemoveCategory (CategoryIDRequest) returns (DeleteCategoryResponse) {}    
+    rpc GetUserCategories (UserPagingRequest) returns (CategoriesReponse) {}
+}
+
+message UserPagingRequest {
+    int32 UserID = 1;
+    int32 Offset = 2;
+    int32 Limit = 3;
+}
+
+message ExpensesReponse {
+    repeated ExpenseResponse Expenses = 1;
+}
+
+message CategoriesReponse {
+    repeated CategoryResponse Categories = 1;
+}
+
+message ExpenseRequest {
+    int32	ID = 1;
+	int64 Date = 2;
+    float Value = 3;
+	int32 CategoryID = 4;
+	int32 UserID = 5;	
+}
+
+message ExpenseResponse {
+    int32	ID = 1;
+	int64 Date = 2;
+    float Value = 3;
+	int32 CategoryID = 4;
+	int32 UserID = 5;	
+}
+
+message ExpenseIDRequest {
+    uint32 ID = 1;    
+}
+
+message DeleteExpenseResponse {
+    bool Success = 1;
+}
+
+message CategoryRequest {
+    int32	ID = 1;
+	int64 Date = 2;
+    float Value = 3;
+	int32 CategoryID = 4;
+	int32 UserID = 5;	
+}
+
+message CategoryResponse {
+    int32	ID = 1;
+	int64 Date = 2;
+    float Value = 3;
+	int32 CategoryID = 4;
+	int32 UserID = 5;	
+}
+
+message CategoryIDRequest {
+    uint32 ID = 1;    
+}
+
+message DeleteCategoryResponse {
+    bool Success = 1;
+}
