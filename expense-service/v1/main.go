@@ -17,6 +17,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"time"
 )
 
 type ExpenseService struct {
@@ -94,11 +95,65 @@ func UpgradeDatabase(s quark.Service) error {
 }
 
 func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.ExpenseResponse, error) {
-	return nil, nil
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewExpenseRepository(context)
+
+	expense, err := repo.FindByID(in.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proxy.ExpenseResponse{
+		ID: expense.ID,
+		Category: &proxy.CategoryResponse{
+			ID:    expense.Category.ID,
+			Limit: expense.Category.Limit,
+			Name:  expense.Category.Name,
+		},
+		Value: expense.Value,
+		Date:  expense.Date.Unix(),
+	}, nil
 }
 
 func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.ExpenseRequest) (*proxy.ExpenseResponse, error) {
-	return nil, nil
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	expense := &model.Expense{
+		ID:         in.ID,
+		Date:       time.Unix(in.Date, 0),
+		Value:      in.Value,
+		UserID:     in.UserID,
+		CategoryID: in.Category.ID,
+	}
+
+	repo := model.NewExpenseRepository(context)
+	if err := repo.Save(expense); err != nil {
+		return nil, err
+	}
+
+	es.Log().InfoWithFields(logger.Fields{
+		"expense": expense,
+	}, "Expense")
+
+	return &proxy.ExpenseResponse{
+		ID:    expense.ID,
+		Date:  expense.Date.Unix(),
+		Value: expense.Value,
+		Category: &proxy.CategoryResponse{
+			ID:    expense.Category.ID,
+			Limit: expense.Category.Limit,
+			Name:  expense.Category.Name,
+		},
+	}, nil
 }
 
 func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.DeleteExpenseResponse, error) {
@@ -114,7 +169,29 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 }
 
 func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.CategoryRequest) (*proxy.CategoryResponse, error) {
-	return nil, nil
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	category := &model.Category{
+		ID:     in.ID,
+		Limit:  in.Limit,
+		Name:   in.Name,
+		UserID: uint32(in.UserID),
+	}
+
+	repo := model.NewExpenseRepository(context)
+	if err := repo.Save(category); err != nil {
+		return nil, err
+	}
+
+	return &proxy.CategoryResponse{
+		ID:    category.ID,
+		Limit: category.Limit,
+		Name:  category.Name,
+	}, nil
 }
 
 func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.DeleteCategoryResponse, error) {
