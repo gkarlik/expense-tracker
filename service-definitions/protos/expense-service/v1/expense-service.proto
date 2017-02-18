@@ -14,7 +14,7 @@ service ExpenseService {
 }
 
 message UserPagingRequest {
-    int32 UserID = 1;
+    uint32 UserID = 1;
     int32 Offset = 2;
     int32 Limit = 3;
 }
@@ -28,19 +28,18 @@ message CategoriesReponse {
 }
 
 message ExpenseRequest {
-    int32	ID = 1;
+    uint32 ID = 1;
 	int64 Date = 2;
     float Value = 3;
-	int32 CategoryID = 4;
-	int32 UserID = 5;	
+	CategoryRequest Category = 4;
+	uint32 UserID = 5;	
 }
 
 message ExpenseResponse {
-    int32	ID = 1;
+    uint32 ID = 1;
 	int64 Date = 2;
     float Value = 3;
-	int32 CategoryID = 4;
-	int32 UserID = 5;	
+	CategoryResponse Category = 4;
 }
 
 message ExpenseIDRequest {
@@ -52,19 +51,16 @@ message DeleteExpenseResponse {
 }
 
 message CategoryRequest {
-    int32	ID = 1;
-	int64 Date = 2;
-    float Value = 3;
-	int32 CategoryID = 4;
-	int32 UserID = 5;	
+    uint32 ID = 1;
+	float Limit = 2;
+	string Name = 3;
+	int32 UserID = 4;
 }
 
 message CategoryResponse {
-    int32	ID = 1;
-	int64 Date = 2;
-    float Value = 3;
-	int32 CategoryID = 4;
-	int32 UserID = 5;	
+    uint32 ID = 1;
+	float Limit = 2;
+	string Name = 3;
 }
 
 message CategoryIDRequest {
