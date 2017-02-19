@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
+	"github.com/gkarlik/expense-tracker/api-gateway/handlers/v1"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
@@ -65,19 +65,19 @@ func main() {
 		auth.WithSecret(secret),
 		auth.WithContextKey("USER_KEY"),
 		auth.WithAuthenticationFunc(func(credentials auth.Credentials) (auth.Claims, error) {
-			return handlers.AuthenticateUser(srv, credentials)
+			return v1.AuthenticateUser(srv, credentials)
 		}))
 
 	rl := ratelimiter.NewHTTPRateLimiter(100 * time.Millisecond)
 
 	r := mux.NewRouter()
-	// user service
-	r.Handle("/login", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
-	r.Handle("/register", rl.Handle(handlers.RegisterUserHandler(srv))).Methods(http.MethodPost)
+	// user service - v1
+	r.Handle("/api/v1/auth", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
+	r.Handle("/api/v1/users", rl.Handle(v1.RegisterUserHandler(srv))).Methods(http.MethodPost)
 
-	// expense service
-	r.Handle("/expense/update", rl.Handle(am.Authenticate(handlers.UpdateExpenseHandler(srv)))).Methods(http.MethodPost)
-	r.Handle("/category/update", rl.Handle(am.Authenticate(handlers.UpdateCategoryHandler(srv)))).Methods(http.MethodPost)
+	// expense service - v1
+	r.Handle("/api/v1/expenses", rl.Handle(am.Authenticate(v1.UpdateExpenseHandler(srv)))).Methods(http.MethodPut, http.MethodPost)
+	r.Handle("/api/v1/categories", rl.Handle(am.Authenticate(v1.UpdateCategoryHandler(srv)))).Methods(http.MethodPut, http.MethodPost)
 
 	srv.Log().InfoWithFields(logger.Fields{
 		"addr": srv.Info().Address.String(),

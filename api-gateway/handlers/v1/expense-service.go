@@ -1,9 +1,10 @@
-package handlers
+package v1
 
 import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
 	es "github.com/gkarlik/expense-tracker/api-gateway/proxy/expense-service/v1"
 	"github.com/gkarlik/quark-go"
 	sd "github.com/gkarlik/quark-go/service/discovery"
@@ -14,12 +15,12 @@ import (
 func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 	url, err := s.Discovery().GetServiceAddress(sd.ByName("ExpenseService"), sd.ByVersion("v1"))
 	if err != nil || url == nil {
-		LogError(s, err, "Cannot locate ExpenseService")
+		handlers.LogError(s, err, "Cannot locate ExpenseService")
 		return nil, err
 	}
 	conn, err := grpc.Dial(url.String(), grpc.WithInsecure())
 	if err != nil {
-		LogError(s, err, "Cannot dial address provided for ExpenseService")
+		handlers.LogError(s, err, "Cannot dial address provided for ExpenseService")
 		return nil, err
 	}
 	return conn, err
@@ -29,15 +30,15 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var expense es.ExpenseRequest
 
-		if err := ParseRequestData(r, &expense); err != nil {
-			LogError(s, err, "Cannot process expense update request")
+		if err := handlers.ParseRequestData(r, &expense); err != nil {
+			handlers.LogError(s, err, "Cannot process expense update request")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
-			LogError(s, err, "Cannot connect to ExpenseService")
+			handlers.LogError(s, err, "Cannot connect to ExpenseService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -46,14 +47,14 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		expenseService := es.NewExpenseServiceClient(conn)
 		e, err := expenseService.UpdateExpense(context.Background(), &expense)
 		if err != nil {
-			LogError(s, err, "Cannot update expense")
+			handlers.LogError(s, err, "Cannot update expense")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		data, err := json.Marshal(e)
 		if err != nil {
-			LogError(s, err, "Cannot send JSON reponse")
+			handlers.LogError(s, err, "Cannot send JSON reponse")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -67,15 +68,15 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var category es.CategoryRequest
 
-		if err := ParseRequestData(r, &category); err != nil {
-			LogError(s, err, "Cannot process expense update request")
+		if err := handlers.ParseRequestData(r, &category); err != nil {
+			handlers.LogError(s, err, "Cannot process expense update request")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
-			LogError(s, err, "Cannot connect to ExpenseService")
+			handlers.LogError(s, err, "Cannot connect to ExpenseService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -84,14 +85,14 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		expenseService := es.NewExpenseServiceClient(conn)
 		c, err := expenseService.UpdateCategory(context.Background(), &category)
 		if err != nil {
-			LogError(s, err, "Cannot update expense")
+			handlers.LogError(s, err, "Cannot update expense")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		data, err := json.Marshal(c)
 		if err != nil {
-			LogError(s, err, "Cannot send JSON reponse")
+			handlers.LogError(s, err, "Cannot send JSON reponse")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}

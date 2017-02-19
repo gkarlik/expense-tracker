@@ -1,4 +1,4 @@
-package handlers
+package v1
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
 	us "github.com/gkarlik/expense-tracker/api-gateway/proxy/user-service/v1"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
@@ -33,14 +34,14 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var user us.RegisterUserRequest
 
-		if err := ParseRequestData(r, &user); err != nil {
-			LogError(s, err, "Cannot process user registration request")
+		if err := handlers.ParseRequestData(r, &user); err != nil {
+			handlers.LogError(s, err, "Cannot process user registration request")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
-			LogError(s, err, "Cannot connect to UserService")
+			handlers.LogError(s, err, "Cannot connect to UserService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -49,7 +50,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		userService := us.NewUserServiceClient(conn)
 		_, err = userService.RegisterUser(context.Background(), &user)
 		if err != nil {
-			LogError(s, err, "Cannot register user")
+			handlers.LogError(s, err, "Cannot register user")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -60,7 +61,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claims, error) {
 	conn, err := GetUserServiceConn(s)
 	if err != nil || conn == nil {
-		LogError(s, err, "Cannot connect to UserService")
+		handlers.LogError(s, err, "Cannot connect to UserService")
 		return auth.Claims{}, errors.New("Cannot connect to UserService")
 	}
 	defer conn.Close()
@@ -72,7 +73,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 		Pin:      credentials.Properties["Pin"],
 	})
 	if err != nil {
-		LogError(s, err, "Cannot authenticate user")
+		handlers.LogError(s, err, "Cannot authenticate user")
 		return auth.Claims{}, errors.New("Invalid username or password")
 	}
 	return auth.Claims{
