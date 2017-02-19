@@ -20,6 +20,14 @@ type UserRepository struct {
 	*gorm.RepositoryBase
 }
 
+func (ur *UserRepository) FindByID(id uint32) (*User, error) {
+	var user User
+	if err := ur.First(&user, User{ID: uint(id)}); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (ur *UserRepository) FindByLogin(login string) (*User, error) {
 	var user User
 	if err := ur.First(&user, User{Login: login}); err != nil {

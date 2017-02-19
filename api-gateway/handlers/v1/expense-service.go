@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
@@ -30,15 +29,12 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var expense es.ExpenseRequest
 
-		if err := handlers.ParseRequestData(r, &expense); err != nil {
-			handlers.LogError(s, err, "Cannot process expense update request")
+		if err := handlers.ParseRequestData(s, r, &expense); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
-			handlers.LogError(s, err, "Cannot connect to ExpenseService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -52,15 +48,10 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 			return
 		}
 
-		data, err := json.Marshal(e)
-		if err != nil {
-			handlers.LogError(s, err, "Cannot send JSON reponse")
+		if err := handlers.JSONResponse(s, w, e); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
 	}
 }
 
@@ -68,15 +59,12 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var category es.CategoryRequest
 
-		if err := handlers.ParseRequestData(r, &category); err != nil {
-			handlers.LogError(s, err, "Cannot process expense update request")
+		if err := handlers.ParseRequestData(s, r, &category); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
-			handlers.LogError(s, err, "Cannot connect to ExpenseService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -90,14 +78,9 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 			return
 		}
 
-		data, err := json.Marshal(c)
-		if err != nil {
-			handlers.LogError(s, err, "Cannot send JSON reponse")
+		if err := handlers.JSONResponse(s, w, c); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
 	}
 }

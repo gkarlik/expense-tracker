@@ -2,6 +2,7 @@ package v1
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -12,6 +13,7 @@ import (
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
+	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -32,16 +34,14 @@ func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 
 func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user us.RegisterUserRequest
+		var user us.UserRequest
 
-		if err := handlers.ParseRequestData(r, &user); err != nil {
-			handlers.LogError(s, err, "Cannot process user registration request")
+		if err := handlers.ParseRequestData(s, r, &user); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
-			handlers.LogError(s, err, "Cannot connect to UserService")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -65,13 +65,12 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claims, error) {
 	conn, err := GetUserServiceConn(s)
 	if err != nil || conn == nil {
-		handlers.LogError(s, err, "Cannot connect to UserService")
 		return auth.Claims{}, errors.ErrUserServiceConnection
 	}
 	defer conn.Close()
 
 	userService := us.NewUserServiceClient(conn)
-	_, err = userService.AuthenticateUser(context.Background(), &us.AuthenticateUserRequest{
+	_, err = userService.AuthenticateUser(context.Background(), &us.UserCredentialsRequest{
 		Login:    credentials.Username,
 		Password: credentials.Password,
 		Pin:      credentials.Properties["Pin"],
@@ -87,4 +86,68 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 			ExpiresAt: time.Now().Add(1 * time.Hour).Unix(),
 		},
 	}, nil
+}
+
+func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		login := q.Get("login")
+
+		if login == "" {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		conn, err := GetUserServiceConn(s)
+		if err != nil || conn == nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		userService := us.NewUserServiceClient(conn)
+		user, err := userService.GetUserByLogin(context.Background(), &us.UserLoginRequest{Login: login})
+		if err != nil {
+			handlers.LogError(s, err, "User not found")
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if err := handlers.JSONResponse(s, w, user); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := mux.Vars(r)["id"]
+		id, err := strconv.Atoi(userID)
+
+		if userID == "" || err != nil {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		conn, err := GetUserServiceConn(s)
+		if err != nil || conn == nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		userService := us.NewUserServiceClient(conn)
+		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: uint32(id)})
+		if err != nil {
+			handlers.LogError(s, err, "User not found")
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if err := handlers.JSONResponse(s, w, user); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	}
 }

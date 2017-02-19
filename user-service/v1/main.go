@@ -93,7 +93,7 @@ func UpgradeDatabase(s quark.Service) error {
 	return nil
 }
 
-func (us *UserService) RegisterUser(ctx context.Context, in *proxy.RegisterUserRequest) (*proxy.RegisterUserResponse, error) {
+func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) (*proxy.RegisterUserResponse, error) {
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.RegisterUserR
 	}, nil
 }
 
-func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.AuthenticateUserRequest) (*proxy.AuthenticateUserResponse, error) {
+func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCredentialsRequest) (*proxy.EmptyResponse, error) {
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -157,7 +157,45 @@ func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.Authentic
 			return nil, err
 		}
 	}
-	return &proxy.AuthenticateUserResponse{
+	return &proxy.EmptyResponse{}, nil
+}
+
+func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest) (*proxy.UserResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewUserRepository(context)
+	user, err := repo.FindByID(in.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proxy.UserResponse{
+		ID:        uint32(user.ID),
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Login:     user.Login,
+	}, nil
+}
+
+func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRequest) (*proxy.UserResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewUserRepository(context)
+	user, err := repo.FindByLogin(in.Login)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proxy.UserResponse{
+		ID:        uint32(user.ID),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Login:     user.Login,
