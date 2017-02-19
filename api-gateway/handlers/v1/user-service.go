@@ -1,13 +1,13 @@
 package v1
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
 	us "github.com/gkarlik/expense-tracker/api-gateway/proxy/user-service/v1"
+	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
@@ -51,6 +51,10 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		_, err = userService.RegisterUser(context.Background(), &user)
 		if err != nil {
 			handlers.LogError(s, err, "Cannot register user")
+			if errors.ErrUserExists.IsSame(err) {
+				http.Error(w, "User already exists", http.StatusConflict)
+				return
+			}
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -62,7 +66,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 	conn, err := GetUserServiceConn(s)
 	if err != nil || conn == nil {
 		handlers.LogError(s, err, "Cannot connect to UserService")
-		return auth.Claims{}, errors.New("Cannot connect to UserService")
+		return auth.Claims{}, errors.ErrUserServiceConnection
 	}
 	defer conn.Close()
 
@@ -74,7 +78,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 	})
 	if err != nil {
 		handlers.LogError(s, err, "Cannot authenticate user")
-		return auth.Claims{}, errors.New("Invalid username or password")
+		return auth.Claims{}, errors.ErrInvalidUsernamePassword
 	}
 	return auth.Claims{
 		Username: credentials.Username,

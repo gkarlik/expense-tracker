@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 
+	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/expense-tracker/user-service/v1/model"
 	"github.com/gkarlik/expense-tracker/user-service/v1/proxy"
 	"github.com/gkarlik/quark-go"
@@ -99,6 +100,14 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.RegisterUserR
 	}
 	defer context.Dispose()
 
+	repo := model.NewUserRepository(context)
+
+	// check if user already exists
+	u, _ := repo.FindByLogin(in.Login)
+	if u != nil {
+		return nil, errors.ErrUserExists
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -117,7 +126,6 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.RegisterUserR
 		Pin:       string(hashedPin),
 	}
 
-	repo := model.NewUserRepository(context)
 	if err := repo.Save(user); err != nil {
 		return nil, err
 	}
