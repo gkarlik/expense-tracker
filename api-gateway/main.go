@@ -73,11 +73,11 @@ func main() {
 	r := mux.NewRouter()
 	// user service
 	r.Handle("/login", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
-	r.Handle("/register", rl.Handle(http.HandlerFunc(handlers.RegisterUserHandler(srv)))).Methods(http.MethodPost)
+	r.Handle("/register", rl.Handle(handlers.RegisterUserHandler(srv))).Methods(http.MethodPost)
 
 	// expense service
-	r.Handle("/expense/update", rl.Handle(http.HandlerFunc(handlers.UpdateExpenseHandler(srv)))).Methods(http.MethodPost)
-	r.Handle("/category/update", rl.Handle(http.HandlerFunc(handlers.UpdateCategoryHandler(srv)))).Methods(http.MethodPost)
+	r.Handle("/expense/update", rl.Handle(am.Authenticate(handlers.UpdateExpenseHandler(srv)))).Methods(http.MethodPost)
+	r.Handle("/category/update", rl.Handle(am.Authenticate(handlers.UpdateCategoryHandler(srv)))).Methods(http.MethodPost)
 
 	srv.Log().InfoWithFields(logger.Fields{
 		"addr": srv.Info().Address.String(),
