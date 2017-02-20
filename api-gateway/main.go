@@ -73,8 +73,8 @@ func main() {
 	r := mux.NewRouter()
 	// user service - v1
 	r.Handle("/api/v1/auth", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
-	r.Handle("/api/v1/users", rl.Handle(v1.GetUserByLoginHandler(srv))).Methods(http.MethodGet)
-	r.Handle("/api/v1/users/{id:[0-9]+}", rl.Handle(v1.GetUserByIDHandler(srv))).Methods(http.MethodGet)
+	r.Handle("/api/v1/users", rl.Handle(am.Authenticate(v1.GetUserByLoginHandler(srv)))).Methods(http.MethodGet)
+	r.Handle("/api/v1/users/{id:[0-9]+}", rl.Handle(am.Authenticate(v1.GetUserByIDHandler(srv)))).Methods(http.MethodGet)
 	r.Handle("/api/v1/users", rl.Handle(v1.RegisterUserHandler(srv))).Methods(http.MethodPost)
 
 	// expense service - v1
