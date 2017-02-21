@@ -105,7 +105,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 	// check if user already exists
 	u, _ := repo.FindByLogin(in.Login)
 	if u != nil {
-		return nil, errors.ErrUserExists
+		return nil, errors.ErrUserAlreadyExists
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
