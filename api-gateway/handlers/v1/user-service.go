@@ -6,9 +6,9 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/gkarlik/expense-tracker/api-gateway/handlers"
 	us "github.com/gkarlik/expense-tracker/api-gateway/proxy/user-service/v1"
 	"github.com/gkarlik/expense-tracker/shared/errors"
+	"github.com/gkarlik/expense-tracker/shared/handler"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
@@ -36,13 +36,13 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var user us.UserRequest
 
-		if err := handlers.ParseRequestData(s, r, &user); err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if err := handler.ParseRequestData(r, &user); err != nil {
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -50,22 +50,21 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		userService := us.NewUserServiceClient(conn)
 		_, err = userService.RegisterUser(context.Background(), &user)
 		if err != nil {
-			handlers.LogError(s, err, "Cannot register user")
-			if errors.ErrUserExists.IsSame(err) {
-				http.Error(w, "User already exists", http.StatusConflict)
+			if errors.ErrUserAlreadyExists.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrUserAlreadyExists, http.StatusConflict)
 				return
 			}
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrCannotRegisterUser, http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
 func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claims, error) {
 	conn, err := GetUserServiceConn(s)
 	if err != nil || conn == nil {
-		return auth.Claims{}, errors.ErrUserServiceConnection
+		return auth.Claims{}, errors.ErrInternal
 	}
 	defer conn.Close()
 
@@ -76,7 +75,6 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 		Pin:      credentials.Properties["Pin"],
 	})
 	if err != nil {
-		handlers.LogError(s, err, "Cannot authenticate user")
 		return auth.Claims{}, errors.ErrInvalidUsernamePassword
 	}
 	return auth.Claims{
@@ -94,13 +92,13 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 		login := q.Get("login")
 
 		if login == "" {
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -108,15 +106,10 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 		userService := us.NewUserServiceClient(conn)
 		user, err := userService.GetUserByLogin(context.Background(), &us.UserLoginRequest{Login: login})
 		if err != nil {
-			handlers.LogError(s, err, "User not found")
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-
-		if err := handlers.JSONResponse(s, w, user); err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
+		handler.Response(w, user)
 	}
 }
 
@@ -132,7 +125,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 		defer conn.Close()
@@ -140,14 +133,9 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		userService := us.NewUserServiceClient(conn)
 		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: uint32(id)})
 		if err != nil {
-			handlers.LogError(s, err, "User not found")
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-
-		if err := handlers.JSONResponse(s, w, user); err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
+		handler.Response(w, user)
 	}
 }
