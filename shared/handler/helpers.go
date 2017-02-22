@@ -8,6 +8,14 @@ import (
 	"github.com/gkarlik/expense-tracker/shared/errors"
 )
 
+func DumpReqBody(r *http.Request) string {
+	b, err := ioutil.ReadAll(r.Body)
+	if err == nil && b != nil {
+		return string(b)
+	}
+	return ""
+}
+
 func ParseRequestData(r *http.Request, in interface{}) error {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {

@@ -34,7 +34,7 @@ func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Register user request")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Register user request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing register user handler")
 
 		var user us.UserRequest
@@ -104,7 +104,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by login request")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Get user by login request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by login handler")
 
 		q := r.URL.Query()
@@ -140,7 +140,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by ID request")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Get user by ID request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by ID handler")
 
 		userID := mux.Vars(r)["id"]
