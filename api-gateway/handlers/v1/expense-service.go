@@ -9,7 +9,6 @@ import (
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -28,9 +27,8 @@ func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 
 func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := uuid.NewV4()
+		reqID := r.Context().Value("Request-ID")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update expense handler")
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Update expense request")
 
 		var expense es.ExpenseRequest
 		body, err := handler.ParseRequestData(r, &expense)
@@ -39,7 +37,7 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Update expense request body")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update expense request body")
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
@@ -64,9 +62,8 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 
 func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := uuid.NewV4()
+		reqID := r.Context().Value("Request-ID")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update category handler")
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Update category request")
 
 		var category es.CategoryRequest
 		body, err := handler.ParseRequestData(r, &category)
@@ -75,7 +72,7 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Update category request body")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update category request body")
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {

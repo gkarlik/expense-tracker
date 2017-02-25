@@ -13,7 +13,6 @@ import (
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -32,9 +31,8 @@ func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 
 func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := uuid.NewV4()
+		reqID := r.Context().Value("Request-ID")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing register user handler")
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Register user request")
 
 		var user us.UserRequest
 		body, err := handler.ParseRequestData(r, &user)
@@ -43,7 +41,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Register user request body")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Register user request body")
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
@@ -71,12 +69,11 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 }
 
 func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claims, error) {
-	reqID := uuid.NewV4()
-	s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing authenticate user handler")
+	s.Log().Info("Processing authenticate user handler")
 
 	conn, err := GetUserServiceConn(s)
 	if err != nil || conn == nil {
-		s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
+		s.Log().ErrorWithFields(logger.Fields{"error": err}, "Cannot connect to UserService")
 		return auth.Claims{}, errors.ErrInternal
 	}
 	defer conn.Close()
@@ -88,10 +85,10 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 		Pin:      credentials.Properties["Pin"],
 	})
 	if err != nil {
-		s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot authenticate user")
+		s.Log().ErrorWithFields(logger.Fields{"error": err}, "Cannot authenticate user")
 		return auth.Claims{}, errors.ErrInvalidUsernamePassword
 	}
-	s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing authenticate user handler")
+	s.Log().Info("Done processing authenticate user handler")
 
 	return auth.Claims{
 		Username: credentials.Username,
@@ -104,9 +101,8 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 
 func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := uuid.NewV4()
+		reqID := r.Context().Value("Request-ID")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by login handler")
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by login request")
 
 		q := r.URL.Query()
 		login := q.Get("login")
@@ -140,8 +136,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 
 func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by ID request")
+		reqID := r.Context().Value("Request-ID")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by ID handler")
 
 		userID := mux.Vars(r)["id"]

@@ -1,16 +1,19 @@
 package routes
 
 import (
+	"errors"
+	"net/http"
 	"time"
 
-	"errors"
 	"github.com/gkarlik/expense-tracker/api-gateway/handlers/v1"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
+	"github.com/gkarlik/quark-go/logger"
 	"github.com/gkarlik/quark-go/ratelimiter"
 	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
 	"github.com/urfave/negroni"
-	"net/http"
+	"golang.org/x/net/context"
 )
 
 var limterMiddlewareHandler = negroni.HandlerFunc(
@@ -18,6 +21,7 @@ var limterMiddlewareHandler = negroni.HandlerFunc(
 )
 
 var limterMiddleware = negroni.New(
+	requestTraceMiddleware,
 	limterMiddlewareHandler,
 )
 
@@ -31,7 +35,18 @@ var authenticationMiddlewareHandler = auth.NewAuthenticationMiddleware(
 
 var authenticationMiddleware = negroni.HandlerFunc(authenticationMiddlewareHandler.AuthenticateWithNext)
 
+var requestTraceMiddleware = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	reqID := uuid.NewV4()
+	ctx := context.WithValue(r.Context(), "Request-ID", reqID.String())
+	r = r.WithContext(ctx)
+
+	logger.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Received request")
+
+	next(w, r)
+})
+
 var commonMiddleware = negroni.New(
+	requestTraceMiddleware,
 	limterMiddlewareHandler,
 	authenticationMiddleware,
 )
