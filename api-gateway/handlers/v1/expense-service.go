@@ -29,15 +29,18 @@ func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Update expense request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update expense handler")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Update expense request")
 
 		var expense es.ExpenseRequest
-		if err := handler.ParseRequestData(r, &expense); err != nil {
+		body, err := handler.ParseRequestData(r, &expense)
+		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Update expense request body")
+
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
@@ -62,15 +65,18 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Update category request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update category handler")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Update category request")
 
 		var category es.CategoryRequest
-		if err := handler.ParseRequestData(r, &category); err != nil {
+		body, err := handler.ParseRequestData(r, &category)
+		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Update category request body")
+
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")

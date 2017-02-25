@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -34,15 +33,17 @@ func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Register user request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing register user handler")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Register user request")
 
 		var user us.UserRequest
-		if err := handler.ParseRequestData(r, &user); err != nil {
+		body, err := handler.ParseRequestData(r, &user)
+		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
 			return
 		}
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": body}, "Register user request body")
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
@@ -104,8 +105,8 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Get user by login request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by login handler")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by login request")
 
 		q := r.URL.Query()
 		login := q.Get("login")
@@ -140,14 +141,13 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.NewV4()
-		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r, "body": handler.DumpReqBody(r)}, "Get user by ID request")
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Get user by ID request")
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by ID handler")
 
 		userID := mux.Vars(r)["id"]
-		id, err := strconv.Atoi(userID)
 
-		if userID == "" || err != nil {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Missing 'ID' parameter in request")
+		if userID == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -161,7 +161,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		userService := us.NewUserServiceClient(conn)
-		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: uint32(id)})
+		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: userID})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get user by ID")
 			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
