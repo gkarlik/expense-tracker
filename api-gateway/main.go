@@ -3,14 +3,11 @@ package main
 import (
 	"net/http"
 	"strconv"
-	"time"
 
-	"github.com/gkarlik/expense-tracker/api-gateway/handlers/v1"
+	"github.com/gkarlik/expense-tracker/api-gateway/routes"
 	"github.com/gkarlik/quark-go"
-	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
 	"github.com/gkarlik/quark-go/metrics/noop"
-	"github.com/gkarlik/quark-go/ratelimiter"
 	"github.com/gkarlik/quark-go/service/discovery/plain"
 	nt "github.com/gkarlik/quark-go/service/trace/noop"
 	"github.com/gorilla/mux"
@@ -44,7 +41,7 @@ func CreateGateway() *Gateway {
 
 	discovery = plain.NewServiceDiscovery("http://" + discoveryAddr)
 
-	return &Gateway{
+	g := &Gateway{
 		ServiceBase: quark.NewService(
 			quark.Name(name),
 			quark.Version(version),
@@ -53,6 +50,9 @@ func CreateGateway() *Gateway {
 			quark.Metrics(noop.NewMetricsReporter()),
 			quark.Tracer(nt.NewTracer())),
 	}
+	//g.Log().SetLevel(logger.DebugLevel)
+
+	return g
 }
 
 var srv = CreateGateway()
@@ -60,26 +60,12 @@ var srv = CreateGateway()
 func main() {
 	defer srv.Dispose()
 
-	secret := quark.GetEnvVar("GATEWAY_SECRET")
-	am := auth.NewAuthenticationMiddleware(
-		auth.WithSecret(secret),
-		auth.WithContextKey("USER_KEY"),
-		auth.WithAuthenticationFunc(func(credentials auth.Credentials) (auth.Claims, error) {
-			return v1.AuthenticateUser(srv, credentials)
-		}))
-
-	rl := ratelimiter.NewHTTPRateLimiter(100 * time.Millisecond)
-
 	r := mux.NewRouter()
-	// user service - v1
-	r.Handle("/api/v1/auth", rl.Handle(http.HandlerFunc(am.GenerateToken))).Methods(http.MethodPost)
-	r.Handle("/api/v1/users", rl.Handle(am.Authenticate(v1.GetUserByLoginHandler(srv)))).Methods(http.MethodGet)
-	r.Handle("/api/v1/users/{id:[0-9]+}", rl.Handle(am.Authenticate(v1.GetUserByIDHandler(srv)))).Methods(http.MethodGet)
-	r.Handle("/api/v1/users", rl.Handle(v1.RegisterUserHandler(srv))).Methods(http.MethodPost)
 
-	// expense service - v1
-	r.Handle("/api/v1/expenses", rl.Handle(am.Authenticate(v1.UpdateExpenseHandler(srv)))).Methods(http.MethodPut, http.MethodPost)
-	r.Handle("/api/v1/categories", rl.Handle(am.Authenticate(v1.UpdateCategoryHandler(srv)))).Methods(http.MethodPut, http.MethodPost)
+	api := routes.Init(r, srv)
+	routes.InitUsersRoutes(api, srv)
+	routes.InitExpensesRoutes(api, srv)
+	routes.InitCategoriesRoutes(api, srv)
 
 	srv.Log().InfoWithFields(logger.Fields{
 		"addr": srv.Info().Address.String(),
