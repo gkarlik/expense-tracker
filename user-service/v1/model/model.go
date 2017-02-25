@@ -10,6 +10,7 @@ type User struct {
 
 	ID        uint   `gorm:"primary_key"`
 	Login     string `gorm:"type:varchar(100);unique_index"`
+	GUID      string `gorm:"type:varchar(100);unique_index"`
 	Password  string `gorm:"size:100"`
 	Pin       string `gorm:"size:100"`
 	FirstName string `gorm:"size:100"`
@@ -20,9 +21,9 @@ type UserRepository struct {
 	*gorm.RepositoryBase
 }
 
-func (ur *UserRepository) FindByID(id uint32) (*User, error) {
+func (ur *UserRepository) FindByGUID(guid string) (*User, error) {
 	var user User
-	if err := ur.First(&user, User{ID: uint(id)}); err != nil {
+	if err := ur.First(&user, User{GUID: guid}); err != nil {
 		return nil, err
 	}
 	return &user, nil

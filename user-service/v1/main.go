@@ -16,6 +16,7 @@ import (
 	gRPC "github.com/gkarlik/quark-go/service/rpc/grpc"
 	nt "github.com/gkarlik/quark-go/service/trace/noop"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -122,6 +123,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 		FirstName: in.FirstName,
 		LastName:  in.LastName,
 		Login:     in.Login,
+		GUID:      uuid.NewV4().String(),
 		Password:  string(hashedPassword),
 		Pin:       string(hashedPin),
 	}
@@ -168,13 +170,13 @@ func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest)
 	defer context.Dispose()
 
 	repo := model.NewUserRepository(context)
-	user, err := repo.FindByID(in.ID)
+	user, err := repo.FindByGUID(in.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proxy.UserResponse{
-		ID:        uint32(user.ID),
+		ID:        user.GUID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Login:     user.Login,
@@ -195,7 +197,7 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 	}
 
 	return &proxy.UserResponse{
-		ID:        uint32(user.ID),
+		ID:        user.GUID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Login:     user.Login,

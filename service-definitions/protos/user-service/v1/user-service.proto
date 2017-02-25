@@ -17,14 +17,14 @@ message UserRequest {
 }
 
 message UserResponse {
-  uint32 ID = 1;
+  string ID = 1;
   string FirstName = 2;
   string LastName = 3;
   string Login = 4;
 }
 
 message UserIDRequest {
-  uint32 ID = 1;
+  string ID = 1;
 }
 
 message UserLoginRequest {
