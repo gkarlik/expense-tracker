@@ -123,7 +123,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 		FirstName: in.FirstName,
 		LastName:  in.LastName,
 		Login:     in.Login,
-		GUID:      uuid.NewV4().String(),
+		ID:        uuid.NewV4().String(),
 		Password:  string(hashedPassword),
 		Pin:       string(hashedPin),
 	}
@@ -137,7 +137,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 	}, nil
 }
 
-func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCredentialsRequest) (*proxy.EmptyResponse, error) {
+func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCredentialsRequest) (*proxy.UserIDResponse, error) {
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -159,7 +159,9 @@ func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCrede
 			return nil, err
 		}
 	}
-	return &proxy.EmptyResponse{}, nil
+	return &proxy.UserIDResponse{
+		ID: user.ID,
+	}, nil
 }
 
 func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest) (*proxy.UserResponse, error) {
@@ -170,13 +172,13 @@ func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest)
 	defer context.Dispose()
 
 	repo := model.NewUserRepository(context)
-	user, err := repo.FindByGUID(in.ID)
+	user, err := repo.FindByID(in.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proxy.UserResponse{
-		ID:        user.GUID,
+		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Login:     user.Login,
@@ -197,7 +199,7 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 	}
 
 	return &proxy.UserResponse{
-		ID:        user.GUID,
+		ID:        user.ID,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Login:     user.Login,

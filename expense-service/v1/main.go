@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gkarlik/expense-tracker/expense-service/v1/model"
 	"github.com/gkarlik/expense-tracker/expense-service/v1/proxy"
@@ -17,7 +18,6 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"time"
 )
 
 type ExpenseService struct {
@@ -102,21 +102,16 @@ func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDReq
 	defer context.Dispose()
 
 	repo := model.NewExpenseRepository(context)
-
 	expense, err := repo.FindByID(in.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proxy.ExpenseResponse{
-		ID: expense.ID,
-		Category: &proxy.CategoryResponse{
-			ID:    expense.Category.ID,
-			Limit: expense.Category.Limit,
-			Name:  expense.Category.Name,
-		},
-		Value: expense.Value,
-		Date:  expense.Date.Unix(),
+		ID:         expense.ID,
+		CategoryID: expense.Category.ID,
+		Value:      expense.Value,
+		Date:       expense.Date.Unix(),
 	}, nil
 }
 
@@ -132,7 +127,7 @@ func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.ExpenseRe
 		Date:       time.Unix(in.Date, 0),
 		Value:      in.Value,
 		UserID:     in.UserID,
-		CategoryID: in.Category.ID,
+		CategoryID: in.CategoryID,
 	}
 
 	repo := model.NewExpenseRepository(context)
@@ -140,32 +135,78 @@ func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.ExpenseRe
 		return nil, err
 	}
 
-	es.Log().InfoWithFields(logger.Fields{
-		"expense": expense,
-	}, "Expense")
-
 	return &proxy.ExpenseResponse{
-		ID:    expense.ID,
-		Date:  expense.Date.Unix(),
-		Value: expense.Value,
-		Category: &proxy.CategoryResponse{
-			ID:    expense.Category.ID,
-			Limit: expense.Category.Limit,
-			Name:  expense.Category.Name,
-		},
+		ID:         expense.ID,
+		Date:       expense.Date.Unix(),
+		Value:      expense.Value,
+		CategoryID: expense.CategoryID,
 	}, nil
 }
 
-func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.DeleteExpenseResponse, error) {
-	return nil, nil
+func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.EmptyResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewExpenseRepository(context)
+	expense, err := repo.FindByID(in.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := repo.Delete(expense); err != nil {
+		return nil, err
+	}
+	return &proxy.EmptyResponse{}, nil
 }
 
-func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.ExpensesReponse, error) {
-	return nil, nil
+func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.ExpensesResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewExpenseRepository(context)
+	expenses, err := repo.FindByUserID(in.UserID, in.Offset, in.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var exps []*proxy.ExpenseResponse
+	for i := 0; i < len(expenses); i++ {
+		exp := &proxy.ExpenseResponse{
+			ID:         expenses[i].ID,
+			Date:       expenses[i].Date.Unix(),
+			Value:      expenses[i].Value,
+			CategoryID: expenses[i].CategoryID,
+		}
+		exps = append(exps, exp)
+	}
+
+	return &proxy.ExpensesResponse{
+		Expenses: exps,
+	}, nil
 }
 
 func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.CategoryResponse, error) {
-	return nil, nil
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewCategoryRepository(context)
+	category, err := repo.FindByID(in.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &proxy.CategoryResponse{
+		ID:    category.ID,
+		Limit: category.Limit,
+		Name:  category.Name,
+	}, nil
 }
 
 func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.CategoryRequest) (*proxy.CategoryResponse, error) {
@@ -179,7 +220,7 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.Category
 		ID:     in.ID,
 		Limit:  in.Limit,
 		Name:   in.Name,
-		UserID: uint32(in.UserID),
+		UserID: in.UserID,
 	}
 
 	repo := model.NewExpenseRepository(context)
@@ -194,12 +235,50 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.Category
 	}, nil
 }
 
-func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.DeleteCategoryResponse, error) {
-	return nil, nil
+func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.EmptyResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewCategoryRepository(context)
+	category, err := repo.FindByID(in.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := repo.Delete(category); err != nil {
+		return nil, err
+	}
+	return &proxy.EmptyResponse{}, nil
 }
 
-func (es *ExpenseService) GetUserCategories(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.CategoriesReponse, error) {
-	return nil, nil
+func (es *ExpenseService) GetUserCategories(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.CategoriesResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	repo := model.NewCategoryRepository(context)
+	categories, err := repo.FindByUserID(in.UserID, in.Offset, in.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	var cs []*proxy.CategoryResponse
+	for i := 0; i < len(categories); i++ {
+		c := &proxy.CategoryResponse{
+			ID:    categories[i].ID,
+			Name:  categories[i].Name,
+			Limit: categories[i].Limit,
+		}
+		cs = append(cs, c)
+	}
+
+	return &proxy.CategoriesResponse{
+		Categories: cs,
+	}, nil
 }
 
 func (es *ExpenseService) RegisterServiceInstance(server interface{}, serviceInstance interface{}) error {

@@ -4,69 +4,64 @@ option go_package = "proxy";
 service ExpenseService {
     rpc GetExpense (ExpenseIDRequest) returns (ExpenseResponse) {}
     rpc UpdateExpense (ExpenseRequest) returns (ExpenseResponse) {}
-    rpc RemoveExpense (ExpenseIDRequest) returns (DeleteExpenseResponse) {}
-    rpc GetUserExpenses (UserPagingRequest) returns (ExpensesReponse) {}
+    rpc RemoveExpense (ExpenseIDRequest) returns (EmptyResponse) {}
+    rpc GetUserExpenses (UserPagingRequest) returns (ExpensesResponse) {}
 
     rpc GetCategory (CategoryIDRequest) returns (CategoryResponse) {}
     rpc UpdateCategory (CategoryRequest) returns (CategoryResponse) {}
-    rpc RemoveCategory (CategoryIDRequest) returns (DeleteCategoryResponse) {}    
-    rpc GetUserCategories (UserPagingRequest) returns (CategoriesReponse) {}
+    rpc RemoveCategory (CategoryIDRequest) returns (EmptyResponse) {}    
+    rpc GetUserCategories (UserPagingRequest) returns (CategoriesResponse) {}
 }
 
 message UserPagingRequest {
-    uint32 UserID = 1;
+    string UserID = 1;
     int32 Offset = 2;
     int32 Limit = 3;
 }
 
-message ExpensesReponse {
+message ExpensesResponse {
     repeated ExpenseResponse Expenses = 1;
 }
 
-message CategoriesReponse {
+message CategoriesResponse {
     repeated CategoryResponse Categories = 1;
 }
 
 message ExpenseRequest {
-    uint32 ID = 1;
+    string ID = 1;
 	int64 Date = 2;
     float Value = 3;
-	CategoryRequest Category = 4;
-	uint32 UserID = 5;	
+	string CategoryID = 4;
+	string UserID = 5;	
 }
 
 message ExpenseResponse {
-    uint32 ID = 1;
+    string ID = 1;
 	int64 Date = 2;
     float Value = 3;
-	CategoryResponse Category = 4;
+	string CategoryID = 4;
 }
 
 message ExpenseIDRequest {
-    uint32 ID = 1;    
-}
-
-message DeleteExpenseResponse {
-    bool Success = 1;
+    string ID = 1;    
 }
 
 message CategoryRequest {
-    uint32 ID = 1;
+    string ID = 1;
 	float Limit = 2;
 	string Name = 3;
-	int32 UserID = 4;
+    string UserID = 4;
 }
 
 message CategoryResponse {
-    uint32 ID = 1;
+    string ID = 1;
 	float Limit = 2;
 	string Name = 3;
 }
 
 message CategoryIDRequest {
-    uint32 ID = 1;    
+    string ID = 1;    
 }
 
-message DeleteCategoryResponse {
-    bool Success = 1;
+message EmptyResponse {
 }
