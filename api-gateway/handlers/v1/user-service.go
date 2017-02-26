@@ -79,7 +79,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 	defer conn.Close()
 
 	userService := us.NewUserServiceClient(conn)
-	_, err = userService.AuthenticateUser(context.Background(), &us.UserCredentialsRequest{
+	ur, err := userService.AuthenticateUser(context.Background(), &us.UserCredentialsRequest{
 		Login:    credentials.Username,
 		Password: credentials.Password,
 		Pin:      credentials.Properties["Pin"],
@@ -96,6 +96,7 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 			Issuer:    s.Info().Address.String(),
 			ExpiresAt: time.Now().Add(1 * time.Hour).Unix(),
 		},
+		Properties: map[string]interface{}{"UserID": ur.ID},
 	}, nil
 }
 
