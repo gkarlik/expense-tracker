@@ -50,7 +50,7 @@ func CreateGateway() *Gateway {
 			quark.Metrics(noop.NewMetricsReporter()),
 			quark.Tracer(nt.NewTracer())),
 	}
-	//g.Log().SetLevel(logger.DebugLevel)
+	g.Log().SetLevel(logger.DebugLevel)
 
 	return g
 }
@@ -60,7 +60,7 @@ var srv = CreateGateway()
 func main() {
 	defer srv.Dispose()
 
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 
 	api := routes.Init(r, srv)
 	routes.InitUsersRoutes(api, srv)
