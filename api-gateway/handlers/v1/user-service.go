@@ -106,7 +106,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by login handler")
 
 		q := r.URL.Query()
-		login := q.Get("login")
+		login := q.Get("l")
 
 		if login == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'login' parameter in request")
