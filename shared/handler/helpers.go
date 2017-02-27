@@ -8,6 +8,11 @@ import (
 	"github.com/gkarlik/expense-tracker/shared/errors"
 )
 
+const (
+	CategoriesPageSize = 50
+	ExpensesPageSize   = 50
+)
+
 func ParseRequestData(r *http.Request, in interface{}) ([]byte, error) {
 	defer r.Body.Close()
 

@@ -46,5 +46,7 @@ var (
 	ErrInvalidRequestParameters = NewError(1005, "Missing or invalid request parameters")
 	ErrUserNotFound             = NewError(1006, "User not found")
 	ErrCannotUpdateExpense      = NewError(1007, "Cannot update expense")
-	ErrCannotUpdateCategory     = NewError(1007, "Cannot update category")
+	ErrCategoryNotFound         = NewError(1008, "Category not found")
+	ErrCannotUpdateCategory     = NewError(1009, "Cannot update category")
+	ErrCannotRemoveCategory     = NewError(1010, "Cannot remove category")
 )

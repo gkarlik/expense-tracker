@@ -2,6 +2,7 @@ package v1
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	es "github.com/gkarlik/expense-tracker/api-gateway/proxy/expense-service/v1"
@@ -11,6 +12,7 @@ import (
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
+	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -136,5 +138,124 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		handler.Response(w, c)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update category handler")
+	}
+}
+
+func GetCategoryHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get category handler")
+
+		id := mux.Vars(r)["id"]
+
+		if id == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		c, err := expenseService.GetCategory(context.Background(), &es.CategoryIDRequest{ID: id})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get category by ID")
+			handler.ErrorResponse(w, errors.ErrCategoryNotFound, http.StatusNotFound)
+			return
+		}
+		handler.Response(w, c)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
+	}
+}
+
+func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing remove category handler")
+
+		id := mux.Vars(r)["id"]
+
+		if id == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		_, err = expenseService.RemoveCategory(context.Background(), &es.CategoryIDRequest{ID: id})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
+			handler.ErrorResponse(w, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
+	}
+}
+
+func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing remove category handler")
+
+		q := r.URL.Query()
+		p := q.Get("p")
+
+		if p == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'p' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		page, err := strconv.Atoi(p)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Invalid 'page' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		claims := r.Context().Value("USER_KEY").(auth.Claims)
+		userID := claims.Properties["UserID"].(string)
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		cs, err := expenseService.GetUserCategories(context.Background(), &es.UserPagingRequest{
+			Limit:  handler.CategoriesPageSize,
+			Offset: int32(page) * handler.CategoriesPageSize,
+			UserID: userID,
+		})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
+			handler.ErrorResponse(w, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
+			return
+		}
+		if len(cs.Categories) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			handler.Response(w, cs)
+		}
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
 	}
 }
