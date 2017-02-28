@@ -151,7 +151,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
