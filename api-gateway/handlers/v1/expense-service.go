@@ -31,7 +31,10 @@ func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 }
 
 func validateExpenseRequest(er *es.ExpenseRequest, r *http.Request) error {
-	if er.ID == "" {
+	if er.ID == "" && r.Method == http.MethodPost {
+		return errors.ErrInvalidRequestParameters
+	}
+	if r.Method == http.MethodPut {
 		er.ID = uuid.NewV4().String()
 	}
 	claims := r.Context().Value("USER_KEY").(auth.Claims)
@@ -53,14 +56,15 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 
 		err = validateExpenseRequest(&expense, r)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Invalid request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			return
 		}
 
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update expense request body")
@@ -95,6 +99,7 @@ func GetExpenseHandler(s quark.Service) http.HandlerFunc {
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
@@ -127,6 +132,7 @@ func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
@@ -202,7 +208,10 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 }
 
 func validateCategoryRequest(cr *es.CategoryRequest, r *http.Request) error {
-	if cr.ID == "" {
+	if cr.ID == "" && r.Method == http.MethodPost {
+		return errors.ErrInvalidRequestParameters
+	}
+	if r.Method == http.MethodPut {
 		cr.ID = uuid.NewV4().String()
 	}
 	claims := r.Context().Value("USER_KEY").(auth.Claims)
@@ -224,13 +233,14 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		err = validateCategoryRequest(&category, r)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Invalid request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			return
 		}
 
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update category request body")
@@ -265,6 +275,7 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
@@ -297,6 +308,7 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)

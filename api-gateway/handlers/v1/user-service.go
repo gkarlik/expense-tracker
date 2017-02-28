@@ -38,7 +38,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &user)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusInternalServerError)
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Register user request body")
