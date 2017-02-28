@@ -84,7 +84,7 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, e)
+		handler.Response(w, r, e)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update expense handler")
 	}
@@ -117,7 +117,7 @@ func GetExpenseHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrExpenseNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, e)
+		handler.Response(w, r, e)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expense handler")
 	}
@@ -200,7 +200,7 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 		if len(es.Expenses) == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			handler.Response(w, es)
+			handler.Response(w, r, es)
 		}
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expenses handler")
@@ -260,7 +260,7 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, c)
+		handler.Response(w, r, c)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update category handler")
 	}
@@ -293,7 +293,7 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrCategoryNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, c)
+		handler.Response(w, r, c)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
 	}
@@ -376,7 +376,7 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 		if len(cs.Categories) == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			handler.Response(w, cs)
+			handler.Response(w, r, cs)
 		}
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get categories handler")

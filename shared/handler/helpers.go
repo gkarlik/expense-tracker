@@ -28,7 +28,7 @@ func ParseRequestData(r *http.Request, in interface{}) ([]byte, error) {
 	return b, nil
 }
 
-func Response(w http.ResponseWriter, in interface{}) {
+func Response(w http.ResponseWriter, r *http.Request, in interface{}) {
 	data, err := json.Marshal(in)
 	if err != nil {
 		ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
@@ -36,7 +36,12 @@ func Response(w http.ResponseWriter, in interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(http.StatusOK)
+
+	if r.Method == http.MethodPost {
+		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 	w.Write(data)
 }
 

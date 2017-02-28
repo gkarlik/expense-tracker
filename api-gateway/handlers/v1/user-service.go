@@ -129,7 +129,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, user)
+		handler.Response(w, r, user)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by login handler")
 	}
@@ -163,7 +163,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, user)
+		handler.Response(w, r, user)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by ID handler")
 	}
