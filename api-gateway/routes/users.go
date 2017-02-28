@@ -9,18 +9,16 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func InitUsersRoutes(parent *mux.Router, s quark.Service) {
-	users := parent.PathPrefix("/users").Subrouter()
-
-	users.Handle("/", commonMiddleware.With(
+func InitUsersRoutes(api *mux.Router, s quark.Service) {
+	api.Handle("/users", commonMiddleware.With(
 		negroni.Wrap(v1.GetUserByLoginHandler(s))),
 	).Methods(http.MethodGet)
 
-	users.Handle("/{id}/", commonMiddleware.With(
+	api.Handle("/users/{id}", commonMiddleware.With(
 		negroni.Wrap(v1.GetUserByIDHandler(s))),
 	).Methods(http.MethodGet)
 
-	users.Handle("/", limterMiddleware.With(
+	api.Handle("/users", limterMiddleware.With(
 		negroni.Wrap(v1.RegisterUserHandler(s))),
 	).Methods(http.MethodPost)
 }

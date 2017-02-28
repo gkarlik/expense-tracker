@@ -9,22 +9,20 @@ import (
 	"github.com/urfave/negroni"
 )
 
-func InitExpensesRoutes(parent *mux.Router, s quark.Service) {
-	expenses := parent.PathPrefix("/expenses").Subrouter()
-
-	expenses.Handle("/", commonMiddleware.With(
+func InitExpensesRoutes(api *mux.Router, s quark.Service) {
+	api.Handle("/expenses", commonMiddleware.With(
 		negroni.Wrap(v1.GetExpensesHandler(s))),
 	).Methods(http.MethodGet)
 
-	expenses.Handle("/", commonMiddleware.With(
+	api.Handle("/expenses", commonMiddleware.With(
 		negroni.Wrap(v1.UpdateExpenseHandler(s))),
 	).Methods(http.MethodPut, http.MethodPost)
 
-	expenses.Handle("/{id}", commonMiddleware.With(
+	api.Handle("/expenses/{id}", commonMiddleware.With(
 		negroni.Wrap(v1.GetExpenseHandler(s))),
 	).Methods(http.MethodGet)
 
-	expenses.Handle("/{id}", commonMiddleware.With(
+	api.Handle("/expenses/{id}", commonMiddleware.With(
 		negroni.Wrap(v1.RemoveExpenseHandler(s))),
 	).Methods(http.MethodDelete)
 }
