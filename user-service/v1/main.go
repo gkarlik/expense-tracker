@@ -210,6 +210,39 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 	}, nil
 }
 
+func (us *UserService) UpdateUser(ctx context.Context, in *proxy.UpdateUserRequest) (*proxy.UserResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	user := &model.User{
+		ID:        in.ID,
+		FirstName: in.FirstName,
+		LastName:  in.LastName,
+		Login:     in.Login,
+		Password:  in.Password,
+		Pin:       in.Pin,
+	}
+
+	if ok := user.IsValid(); !ok {
+		return nil, errors.ErrInvalidCategoryModel
+	}
+
+	repo := model.NewUserRepository(context)
+	if err := repo.Save(user); err != nil {
+		return nil, err
+	}
+
+	return &proxy.UserResponse{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Login:     user.Login,
+	}, nil
+}
+
 func (us *UserService) RegisterServiceInstance(server interface{}, serviceInstance interface{}) error {
 	proxy.RegisterUserServiceServer(server.(*grpc.Server), serviceInstance.(proxy.UserServiceServer))
 

@@ -3,6 +3,7 @@ option go_package = "proxy";
 
 service UserService {
   rpc RegisterUser (UserRequest) returns (RegisterUserResponse) {}
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {}
   rpc AuthenticateUser (UserCredentialsRequest) returns (UserIDResponse) {}  
   rpc GetUserByID (UserIDRequest) returns (UserResponse) {}  
   rpc GetUserByLogin (UserLoginRequest) returns (UserResponse) {}  
@@ -14,6 +15,15 @@ message UserRequest {
   string Login = 3;
   string Password = 4;
   string Pin = 5;
+}
+
+message UpdateUserRequest {
+  string ID = 1;
+  string FirstName = 2;
+  string LastName = 3;
+  string Login = 4;
+  string Password = 5;
+  string Pin = 6;
 }
 
 message UserResponse {

@@ -30,10 +30,10 @@ message CategoriesResponse {
 }
 
 message CreateExpenseRequest {
-	int64 Date = 2;
-    float Value = 3;
-	string CategoryID = 4;
-	string UserID = 5;	
+	int64 Date = 1;
+    float Value = 2;
+	string CategoryID = 3;
+	string UserID = 4;	
 }
 
 message UpdateExpenseRequest {
@@ -56,9 +56,9 @@ message ExpenseIDRequest {
 }
 
 message CreateCategoryRequest {
-	float Limit = 2;
-	string Name = 3;
-    string UserID = 4;
+	float Limit = 1;
+	string Name = 2;
+    string UserID = 3;
 }
 
 message UpdateCategoryRequest {

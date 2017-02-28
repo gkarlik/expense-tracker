@@ -171,3 +171,43 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by ID handler")
 	}
 }
+
+func UpdateUserHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := handler.GetRequestID(r)
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update user handler")
+
+		var user us.UpdateUserRequest
+		body, err := handler.ParseRequestData(r, &user)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			return
+		}
+
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update user request body")
+
+		conn, err := GetUserServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		userService := us.NewUserServiceClient(conn)
+		u, err := userService.UpdateUser(context.Background(), &user)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update user")
+			if errors.ErrInvalidUserModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidUserModel, http.StatusBadRequest)
+				return
+			}
+			handler.ErrorResponse(w, errors.ErrCannotUpdateUser, http.StatusInternalServerError)
+			return
+		}
+		handler.Response(w, u, http.StatusOK)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update user handler")
+	}
+}
