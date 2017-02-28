@@ -74,5 +74,9 @@ func main() {
 
 	discovery.Serve(discoveryAddr)
 
-	http.ListenAndServe(srv.Info().Address.String(), handlers.CORS()(r))
+	http.ListenAndServe(srv.Info().Address.String(), handlers.CORS(
+		handlers.AllowedMethods([]string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost, http.MethodPut, http.MethodDelete}),
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"}),
+	)(r))
 }

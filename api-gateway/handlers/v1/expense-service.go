@@ -31,10 +31,10 @@ func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 }
 
 func validateExpenseRequest(er *es.ExpenseRequest, r *http.Request) error {
-	if er.ID == "" && r.Method == http.MethodPost {
+	if er.ID == "" && r.Method == http.MethodPut {
 		return errors.ErrInvalidRequestParameters
 	}
-	if r.Method == http.MethodPut {
+	if r.Method == http.MethodPost {
 		er.ID = uuid.NewV4().String()
 	}
 	claims := r.Context().Value("USER_KEY").(auth.Claims)
@@ -208,10 +208,10 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 }
 
 func validateCategoryRequest(cr *es.CategoryRequest, r *http.Request) error {
-	if cr.ID == "" && r.Method == http.MethodPost {
+	if cr.ID == "" && r.Method == http.MethodPut {
 		return errors.ErrInvalidRequestParameters
 	}
-	if r.Method == http.MethodPut {
+	if r.Method == http.MethodPost {
 		cr.ID = uuid.NewV4().String()
 	}
 	claims := r.Context().Value("USER_KEY").(auth.Claims)
