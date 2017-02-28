@@ -10,23 +10,44 @@ import (
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/logger"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 )
 
-func validateCategoryRequest(cr *es.CategoryRequest, r *http.Request) error {
-	if cr.ID == "" && r.Method == http.MethodPut {
-		return errors.ErrInvalidRequestParameters
-	}
-	if r.Method == http.MethodPost {
-		cr.ID = uuid.NewV4().String()
-	}
-	cr.UserID = handler.GetUserID(r)
+func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := handler.GetRequestID(r)
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing create category handler")
 
-	if cr.Name == "" || cr.Limit <= 0 {
-		return errors.ErrInvalidRequestParameters
+		var category es.CreateCategoryRequest
+		body, err := handler.ParseRequestData(r, &category)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			return
+		}
+		category.UserID = handler.GetUserID(r)
+
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Create category request body")
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		c, err := expenseService.CreateCategory(context.Background(), &category)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create category")
+			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
+			return
+		}
+		handler.Response(w, c, http.StatusCreated)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing create category handler")
 	}
-	return nil
 }
 
 func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
@@ -34,19 +55,14 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		reqID := handler.GetRequestID(r)
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update category handler")
 
-		var category es.CategoryRequest
+		var category es.UpdateCategoryRequest
 		body, err := handler.ParseRequestData(r, &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
-		err = validateCategoryRequest(&category, r)
-		if err != nil {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Invalid request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
-			return
-		}
+		category.UserID = handler.GetUserID(r)
 
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update category request body")
 

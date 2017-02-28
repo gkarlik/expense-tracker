@@ -15,8 +15,12 @@ func InitExpensesRoutes(api *mux.Router, s quark.Service) {
 	).Methods(http.MethodGet)
 
 	api.Handle("/expenses", commonMiddleware.With(
+		negroni.Wrap(v1.CreateExpenseHandler(s))),
+	).Methods(http.MethodPost)
+
+	api.Handle("/expenses", commonMiddleware.With(
 		negroni.Wrap(v1.UpdateExpenseHandler(s))),
-	).Methods(http.MethodPut, http.MethodPost)
+	).Methods(http.MethodPut)
 
 	api.Handle("/expenses/{id}", commonMiddleware.With(
 		negroni.Wrap(v1.GetExpenseHandler(s))),

@@ -16,6 +16,7 @@ import (
 	gRPC "github.com/gkarlik/quark-go/service/rpc/grpc"
 	nt "github.com/gkarlik/quark-go/service/trace/noop"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -115,7 +116,35 @@ func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDReq
 	}, nil
 }
 
-func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.ExpenseRequest) (*proxy.ExpenseResponse, error) {
+func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExpenseRequest) (*proxy.ExpenseResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	expense := &model.Expense{
+		ID:         uuid.NewV4().String(),
+		Date:       time.Unix(in.Date, 0),
+		Value:      in.Value,
+		UserID:     in.UserID,
+		CategoryID: in.CategoryID,
+	}
+
+	repo := model.NewExpenseRepository(context)
+	if err := repo.Save(expense); err != nil {
+		return nil, err
+	}
+
+	return &proxy.ExpenseResponse{
+		ID:         expense.ID,
+		Date:       expense.Date.Unix(),
+		Value:      expense.Value,
+		CategoryID: expense.CategoryID,
+	}, nil
+}
+
+func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExpenseRequest) (*proxy.ExpenseResponse, error) {
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -209,7 +238,33 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 	}, nil
 }
 
-func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.CategoryRequest) (*proxy.CategoryResponse, error) {
+func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCategoryRequest) (*proxy.CategoryResponse, error) {
+	context, err := NewDbContext()
+	if err != nil {
+		return nil, err
+	}
+	defer context.Dispose()
+
+	category := &model.Category{
+		ID:     uuid.NewV4().String(),
+		Limit:  in.Limit,
+		Name:   in.Name,
+		UserID: in.UserID,
+	}
+
+	repo := model.NewExpenseRepository(context)
+	if err := repo.Save(category); err != nil {
+		return nil, err
+	}
+
+	return &proxy.CategoryResponse{
+		ID:    category.ID,
+		Limit: category.Limit,
+		Name:  category.Name,
+	}, nil
+}
+
+func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCategoryRequest) (*proxy.CategoryResponse, error) {
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err

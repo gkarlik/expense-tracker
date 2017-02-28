@@ -15,8 +15,12 @@ func InitCategoriesRoutes(api *mux.Router, s quark.Service) {
 	).Methods(http.MethodGet)
 
 	api.Handle("/categories", commonMiddleware.With(
+		negroni.Wrap(v1.CreateCategoryHandler(s))),
+	).Methods(http.MethodPost)
+
+	api.Handle("/categories", commonMiddleware.With(
 		negroni.Wrap(v1.UpdateCategoryHandler(s))),
-	).Methods(http.MethodPut, http.MethodPost)
+	).Methods(http.MethodPut)
 
 	api.Handle("/categories/{id}", commonMiddleware.With(
 		negroni.Wrap(v1.GetCategoryHandler(s))),

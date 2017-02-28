@@ -3,7 +3,6 @@ package v1
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	es "github.com/gkarlik/expense-tracker/api-gateway/proxy/expense-service/v1"
 	"github.com/gkarlik/expense-tracker/shared/errors"
@@ -12,7 +11,6 @@ import (
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -29,19 +27,41 @@ func GetExpenseServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 	return conn, err
 }
 
-func validateExpenseRequest(er *es.ExpenseRequest, r *http.Request) error {
-	if er.ID == "" && r.Method == http.MethodPut {
-		return errors.ErrInvalidRequestParameters
-	}
-	if r.Method == http.MethodPost {
-		er.ID = uuid.NewV4().String()
-	}
-	er.UserID = handler.GetUserID(r)
+func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := handler.GetRequestID(r)
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing create expense handler")
 
-	if er.CategoryID == "" || (er.Date <= 0 && er.Date > time.Now().Unix()) || er.Value <= 0 {
-		return errors.ErrInvalidRequestParameters
+		var expense es.CreateExpenseRequest
+		body, err := handler.ParseRequestData(r, &expense)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
+			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			return
+		}
+		expense.UserID = handler.GetUserID(r)
+
+		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Create expense request body")
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		e, err := expenseService.CreateExpense(context.Background(), &expense)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create expense")
+			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
+			return
+		}
+		handler.Response(w, e, http.StatusCreated)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing create expense handler")
 	}
-	return nil
 }
 
 func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
@@ -49,20 +69,14 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		reqID := handler.GetRequestID(r)
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing update expense handler")
 
-		var expense es.ExpenseRequest
+		var expense es.UpdateExpenseRequest
 		body, err := handler.ParseRequestData(r, &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
 			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
-
-		err = validateExpenseRequest(&expense, r)
-		if err != nil {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Invalid request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
-			return
-		}
+		expense.UserID = handler.GetUserID(r)
 
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Update expense request body")
 

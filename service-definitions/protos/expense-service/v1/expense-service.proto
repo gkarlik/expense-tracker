@@ -3,12 +3,14 @@ option go_package = "proxy";
 
 service ExpenseService {
     rpc GetExpense (ExpenseIDRequest) returns (ExpenseResponse) {}
-    rpc UpdateExpense (ExpenseRequest) returns (ExpenseResponse) {}
+    rpc CreateExpense (CreateExpenseRequest) returns (ExpenseResponse) {}
+    rpc UpdateExpense (UpdateExpenseRequest) returns (ExpenseResponse) {}
     rpc RemoveExpense (ExpenseIDRequest) returns (EmptyResponse) {}
     rpc GetUserExpenses (UserPagingRequest) returns (ExpensesResponse) {}
 
     rpc GetCategory (CategoryIDRequest) returns (CategoryResponse) {}
-    rpc UpdateCategory (CategoryRequest) returns (CategoryResponse) {}
+    rpc CreateCategory (CreateCategoryRequest) returns (CategoryResponse) {}
+    rpc UpdateCategory (UpdateCategoryRequest) returns (CategoryResponse) {}
     rpc RemoveCategory (CategoryIDRequest) returns (EmptyResponse) {}    
     rpc GetUserCategories (UserPagingRequest) returns (CategoriesResponse) {}
 }
@@ -27,7 +29,14 @@ message CategoriesResponse {
     repeated CategoryResponse Categories = 1;
 }
 
-message ExpenseRequest {
+message CreateExpenseRequest {
+	int64 Date = 2;
+    float Value = 3;
+	string CategoryID = 4;
+	string UserID = 5;	
+}
+
+message UpdateExpenseRequest {
     string ID = 1;
 	int64 Date = 2;
     float Value = 3;
@@ -46,7 +55,13 @@ message ExpenseIDRequest {
     string ID = 1;    
 }
 
-message CategoryRequest {
+message CreateCategoryRequest {
+	float Limit = 2;
+	string Name = 3;
+    string UserID = 4;
+}
+
+message UpdateCategoryRequest {
     string ID = 1;
 	float Limit = 2;
 	string Name = 3;
