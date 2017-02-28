@@ -59,6 +59,10 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 				handler.ErrorResponse(w, errors.ErrUserAlreadyExists, http.StatusConflict)
 				return
 			}
+			if errors.ErrInvalidUserModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidUserModel, http.StatusBadRequest)
+				return
+			}
 			handler.ErrorResponse(w, errors.ErrCannotRegisterUser, http.StatusInternalServerError)
 			return
 		}

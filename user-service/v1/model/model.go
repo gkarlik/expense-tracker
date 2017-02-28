@@ -16,6 +16,13 @@ type User struct {
 	LastName  string `gorm:"size:200"`
 }
 
+func (u User) IsValid() bool {
+	if u.ID == "" || u.Login == "" || (u.Password == "" && u.Pin == "") || u.FirstName == "" || u.LastName == "" {
+		return false
+	}
+	return true
+}
+
 type UserRepository struct {
 	*gorm.RepositoryBase
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gkarlik/expense-tracker/expense-service/v1/model"
 	"github.com/gkarlik/expense-tracker/expense-service/v1/proxy"
+	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/data/access/rdbms"
 	"github.com/gkarlik/quark-go/data/access/rdbms/gorm"
@@ -131,6 +132,10 @@ func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExp
 		CategoryID: in.CategoryID,
 	}
 
+	if ok := expense.IsValid(); !ok {
+		return nil, errors.ErrInvalidExpenseModel
+	}
+
 	repo := model.NewExpenseRepository(context)
 	if err := repo.Save(expense); err != nil {
 		return nil, err
@@ -157,6 +162,10 @@ func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExp
 		Value:      in.Value,
 		UserID:     in.UserID,
 		CategoryID: in.CategoryID,
+	}
+
+	if ok := expense.IsValid(); !ok {
+		return nil, errors.ErrInvalidExpenseModel
 	}
 
 	repo := model.NewExpenseRepository(context)
@@ -252,6 +261,10 @@ func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCa
 		UserID: in.UserID,
 	}
 
+	if ok := category.IsValid(); !ok {
+		return nil, errors.ErrInvalidCategoryModel
+	}
+
 	repo := model.NewExpenseRepository(context)
 	if err := repo.Save(category); err != nil {
 		return nil, err
@@ -276,6 +289,10 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCa
 		Limit:  in.Limit,
 		Name:   in.Name,
 		UserID: in.UserID,
+	}
+
+	if ok := category.IsValid(); !ok {
+		return nil, errors.ErrInvalidCategoryModel
 	}
 
 	repo := model.NewExpenseRepository(context)

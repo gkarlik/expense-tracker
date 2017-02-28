@@ -55,6 +55,10 @@ func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
 		e, err := expenseService.CreateExpense(context.Background(), &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create expense")
+			if errors.ErrInvalidExpenseModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
+				return
+			}
 			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
 			return
 		}
@@ -92,6 +96,10 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		e, err := expenseService.UpdateExpense(context.Background(), &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update expense")
+			if errors.ErrInvalidExpenseModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
+				return
+			}
 			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
 			return
 		}

@@ -17,6 +17,13 @@ type Category struct {
 	UserID   string `gorm:"type:varchar(100)"`
 }
 
+func (c Category) IsValid() bool {
+	if c.ID == "" || c.Name == "" || c.UserID == "" || c.Limit <= 0 {
+		return false
+	}
+	return true
+}
+
 type Expense struct {
 	rdbms.Entity
 
@@ -26,6 +33,13 @@ type Expense struct {
 	Category   Category
 	CategoryID string `gorm:"type:varchar(100)"`
 	UserID     string `gorm:"type:varchar(100)"`
+}
+
+func (e Expense) IsValid() bool {
+	if e.ID == "" || e.CategoryID == "" || e.UserID == "" || e.Value <= 0 || e.Date.Unix() > time.Now().Unix() || e.Date.Unix() < time.Date(1980, time.January, 1, 23, 0, 0, 0, time.UTC).Unix() {
+		return false
+	}
+	return true
 }
 
 type CategoryRepository struct {

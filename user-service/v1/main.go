@@ -128,6 +128,10 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 		Pin:       string(hashedPin),
 	}
 
+	if ok := user.IsValid(); !ok {
+		return nil, errors.ErrInvalidUserModel
+	}
+
 	if err := repo.Save(user); err != nil {
 		return nil, err
 	}

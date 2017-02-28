@@ -41,6 +41,10 @@ func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
 		c, err := expenseService.CreateCategory(context.Background(), &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create category")
+			if errors.ErrInvalidCategoryModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
+				return
+			}
 			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
 			return
 		}
@@ -78,6 +82,10 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		c, err := expenseService.UpdateCategory(context.Background(), &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update category")
+			if errors.ErrInvalidCategoryModel.IsSame(err) {
+				handler.ErrorResponse(w, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
+				return
+			}
 			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
 			return
 		}
