@@ -109,7 +109,7 @@ func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDReq
 
 	return &proxy.ExpenseResponse{
 		ID:         expense.ID,
-		CategoryID: expense.Category.ID,
+		CategoryID: expense.CategoryID,
 		Value:      expense.Value,
 		Date:       expense.Date.Unix(),
 	}, nil

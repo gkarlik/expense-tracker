@@ -38,15 +38,23 @@ func (e Error) IsSame(err error) bool {
 }
 
 var (
-	ErrUserAlreadyExists        = NewError(1000, "User already exists")
+	// general
 	ErrInvalidUsernamePassword  = NewError(1001, "Invalid username or password")
 	ErrInvalidRequestData       = NewError(1002, "Invalid request data")
 	ErrInternal                 = NewError(1003, "Internal server error")
-	ErrCannotRegisterUser       = NewError(1004, "Cannot register user")
-	ErrInvalidRequestParameters = NewError(1005, "Missing or invalid request parameters")
-	ErrUserNotFound             = NewError(1006, "User not found")
-	ErrCannotUpdateExpense      = NewError(1007, "Cannot update expense")
-	ErrCategoryNotFound         = NewError(1008, "Category not found")
-	ErrCannotUpdateCategory     = NewError(1009, "Cannot update category")
-	ErrCannotRemoveCategory     = NewError(1010, "Cannot remove category")
+	ErrInvalidRequestParameters = NewError(1004, "Missing or invalid request parameters")
+	// user
+	ErrUserAlreadyExists  = NewError(1005, "User already exists")
+	ErrUserNotFound       = NewError(1006, "User not found")
+	ErrCannotRegisterUser = NewError(1007, "Cannot register user")
+	// category
+	ErrCategoryNotFound     = NewError(1008, "Category not found")
+	ErrCannotUpdateCategory = NewError(1009, "Cannot update category")
+	ErrCannotRemoveCategory = NewError(1010, "Cannot remove category")
+	ErrCannotGetCategories  = NewError(1011, "Cannot load categories")
+	// expense
+	ErrExpenseNotFound     = NewError(1012, "Expense not found")
+	ErrCannotUpdateExpense = NewError(1013, "Cannot update expense")
+	ErrCannotRemoveExpense = NewError(1014, "Cannot remove expense")
+	ErrCannotGetExpenses   = NewError(1015, "Cannot load expenses")
 )

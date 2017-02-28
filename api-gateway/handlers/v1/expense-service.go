@@ -86,6 +86,122 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 	}
 }
 
+func GetExpenseHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get expense handler")
+
+		id := mux.Vars(r)["id"]
+		if id == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		e, err := expenseService.GetExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get expense by ID")
+			handler.ErrorResponse(w, errors.ErrExpenseNotFound, http.StatusNotFound)
+			return
+		}
+		handler.Response(w, e)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expense handler")
+	}
+}
+
+func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing remove expense handler")
+
+		id := mux.Vars(r)["id"]
+		if id == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		_, err = expenseService.RemoveExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove expense")
+			handler.ErrorResponse(w, errors.ErrCannotRemoveExpense, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing remove expense handler")
+	}
+}
+
+func GetExpensesHandler(s quark.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reqID := r.Context().Value("Request-ID")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get expenses handler")
+
+		q := r.URL.Query()
+		p := q.Get("p")
+		if p == "" {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'p' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		page, err := strconv.Atoi(p)
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Invalid 'page' parameter in request")
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+
+		conn, err := GetExpenseServiceConn(s)
+		if err != nil || conn == nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
+			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close()
+
+		claims := r.Context().Value("USER_KEY").(auth.Claims)
+		userID := claims.Properties["UserID"].(string)
+
+		expenseService := es.NewExpenseServiceClient(conn)
+		es, err := expenseService.GetUserExpenses(context.Background(), &es.UserPagingRequest{
+			Limit:  handler.ExpensesPageSize,
+			Offset: int32(page) * handler.ExpensesPageSize,
+			UserID: userID,
+		})
+		if err != nil {
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get expenses")
+			handler.ErrorResponse(w, errors.ErrCannotGetExpenses, http.StatusInternalServerError)
+			return
+		}
+		if len(es.Expenses) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			handler.Response(w, es)
+		}
+
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expenses handler")
+	}
+}
+
 func validateCategoryRequest(cr *es.CategoryRequest, r *http.Request) error {
 	if cr.ID == "" {
 		cr.ID = uuid.NewV4().String()
@@ -147,7 +263,6 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get category handler")
 
 		id := mux.Vars(r)["id"]
-
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -180,7 +295,6 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing remove category handler")
 
 		id := mux.Vars(r)["id"]
-
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -210,11 +324,10 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := r.Context().Value("Request-ID")
-		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing remove category handler")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get categories handler")
 
 		q := r.URL.Query()
 		p := q.Get("p")
-
 		if p == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'p' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -246,8 +359,8 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 			UserID: userID,
 		})
 		if err != nil {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
-			handler.ErrorResponse(w, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
+			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get categories")
+			handler.ErrorResponse(w, errors.ErrCannotGetCategories, http.StatusInternalServerError)
 			return
 		}
 		if len(cs.Categories) == 0 {
@@ -256,6 +369,6 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 			handler.Response(w, cs)
 		}
 
-		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
+		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get categories handler")
 	}
 }
