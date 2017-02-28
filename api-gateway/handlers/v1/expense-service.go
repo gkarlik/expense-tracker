@@ -158,9 +158,8 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 		q := r.URL.Query()
 		p := q.Get("p")
 		if p == "" {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'p' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
+			// is 'p' parameter is missing default it to '0'
+			p = "0"
 		}
 
 		page, err := strconv.Atoi(p)
@@ -329,9 +328,8 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 		q := r.URL.Query()
 		p := q.Get("p")
 		if p == "" {
-			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'p' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
+			// is 'p' parameter is missing default it to '0'
+			p = "0"
 		}
 
 		page, err := strconv.Atoi(p)
