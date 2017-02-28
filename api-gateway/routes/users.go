@@ -20,5 +20,5 @@ func InitUsersRoutes(api *mux.Router, s quark.Service) {
 
 	api.Handle("/users", limterMiddleware.With(
 		negroni.Wrap(v1.RegisterUserHandler(s))),
-	).Methods(http.MethodPut)
+	).Methods(http.MethodPost)
 }
