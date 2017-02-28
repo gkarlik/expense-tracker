@@ -10,6 +10,7 @@ import (
 	"github.com/gkarlik/quark-go/metrics/noop"
 	"github.com/gkarlik/quark-go/service/discovery/plain"
 	nt "github.com/gkarlik/quark-go/service/trace/noop"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -73,5 +74,5 @@ func main() {
 
 	discovery.Serve(discoveryAddr)
 
-	http.ListenAndServe(srv.Info().Address.String(), r)
+	http.ListenAndServe(srv.Info().Address.String(), handlers.CORS()(r))
 }
