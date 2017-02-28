@@ -6,12 +6,38 @@ import (
 	"net/http"
 
 	"github.com/gkarlik/expense-tracker/shared/errors"
+	auth "github.com/gkarlik/quark-go/auth/jwt"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
 	CategoriesPageSize = 50
 	ExpensesPageSize   = 50
+	UserClaimsKey      = "USER_KEY"
+	UserIDKey          = "UserID"
+	RequestIDKey       = "Request-ID"
 )
+
+func GetUserID(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
+
+	claims := r.Context().Value(UserClaimsKey).(auth.Claims)
+	userID := claims.Properties[UserIDKey].(string)
+
+	return userID
+}
+
+func GetRequestID(r *http.Request) string {
+	if r == nil {
+		return uuid.NewV4().String()
+	}
+
+	reqID := r.Context().Value(RequestIDKey).(string)
+
+	return reqID
+}
 
 func ParseRequestData(r *http.Request, in interface{}) ([]byte, error) {
 	defer r.Body.Close()
@@ -28,7 +54,7 @@ func ParseRequestData(r *http.Request, in interface{}) ([]byte, error) {
 	return b, nil
 }
 
-func Response(w http.ResponseWriter, r *http.Request, in interface{}) {
+func Response(w http.ResponseWriter, in interface{}, code int) {
 	data, err := json.Marshal(in)
 	if err != nil {
 		ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
@@ -36,12 +62,7 @@ func Response(w http.ResponseWriter, r *http.Request, in interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-
-	if r.Method == http.MethodPost {
-		w.WriteHeader(http.StatusCreated)
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
+	w.WriteHeader(code)
 	w.Write(data)
 }
 

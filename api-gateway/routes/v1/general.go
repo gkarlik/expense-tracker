@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gkarlik/expense-tracker/api-gateway/handlers/v1"
+	"github.com/gkarlik/expense-tracker/shared/handler"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
@@ -27,7 +28,7 @@ var limterMiddleware = negroni.New(
 
 var authenticationMiddlewareHandler = auth.NewAuthenticationMiddleware(
 	auth.WithSecret(quark.GetEnvVar("GATEWAY_SECRET")),
-	auth.WithContextKey("USER_KEY"),
+	auth.WithContextKey(handler.UserClaimsKey),
 	auth.WithAuthenticationFunc(func(credentials auth.Credentials) (auth.Claims, error) {
 		return auth.Claims{}, errors.New("Authenticate function is not set")
 	}),
@@ -37,7 +38,7 @@ var authenticationMiddleware = negroni.HandlerFunc(authenticationMiddlewareHandl
 
 var requestTraceMiddleware = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	reqID := uuid.NewV4()
-	ctx := context.WithValue(r.Context(), "Request-ID", reqID.String())
+	ctx := context.WithValue(r.Context(), handler.RequestIDKey, reqID.String())
 	r = r.WithContext(ctx)
 
 	logger.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Received request")

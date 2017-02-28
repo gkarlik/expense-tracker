@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gkarlik/expense-tracker/api-gateway/routes"
+	v1 "github.com/gkarlik/expense-tracker/api-gateway/routes/v1"
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/logger"
 	"github.com/gkarlik/quark-go/metrics/noop"
@@ -63,10 +63,10 @@ func main() {
 
 	r := mux.NewRouter().StrictSlash(true)
 
-	api := routes.Init(r, srv)
-	routes.InitUsersRoutes(api, srv)
-	routes.InitExpensesRoutes(api, srv)
-	routes.InitCategoriesRoutes(api, srv)
+	api := v1.Init(r, srv)
+	v1.InitUsersRoutes(api, srv)
+	v1.InitExpensesRoutes(api, srv)
+	v1.InitCategoriesRoutes(api, srv)
 
 	srv.Log().InfoWithFields(logger.Fields{
 		"addr": srv.Info().Address.String(),

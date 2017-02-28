@@ -31,7 +31,7 @@ func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
 
 func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := r.Context().Value("Request-ID")
+		reqID := handler.GetRequestID(r)
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing register user handler")
 
 		var user us.UserRequest
@@ -96,13 +96,13 @@ func AuthenticateUser(s quark.Service, credentials auth.Credentials) (auth.Claim
 			Issuer:    s.Info().Address.String(),
 			ExpiresAt: time.Now().Add(1 * time.Hour).Unix(),
 		},
-		Properties: map[string]interface{}{"UserID": ur.ID},
+		Properties: map[string]interface{}{handler.UserIDKey: ur.ID},
 	}, nil
 }
 
 func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := r.Context().Value("Request-ID")
+		reqID := handler.GetRequestID(r)
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by login handler")
 
 		q := r.URL.Query()
@@ -129,7 +129,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, r, user)
+		handler.Response(w, user, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by login handler")
 	}
@@ -137,11 +137,10 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 
 func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		reqID := r.Context().Value("Request-ID")
+		reqID := handler.GetRequestID(r)
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Processing get user by ID handler")
 
 		userID := mux.Vars(r)["id"]
-
 		if userID == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -163,7 +162,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, r, user)
+		handler.Response(w, user, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by ID handler")
 	}
