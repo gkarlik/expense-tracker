@@ -9,8 +9,8 @@ import (
 	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/expense-tracker/shared/handler"
 	"github.com/gkarlik/quark-go"
-	auth "github.com/gkarlik/quark-go/auth/jwt"
 	"github.com/gkarlik/quark-go/logger"
+	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
@@ -38,7 +38,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &user)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		s.Log().DebugWithFields(logger.Fields{"requestID": reqID, "body": string(body)}, "Register user request body")
@@ -46,7 +46,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -56,14 +56,14 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot register user")
 			if errors.ErrUserAlreadyExists.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrUserAlreadyExists, http.StatusConflict)
+				handler.ErrorResponse(s, w, r, errors.ErrUserAlreadyExists, http.StatusConflict)
 				return
 			}
 			if errors.ErrInvalidUserModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidUserModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidUserModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotRegisterUser, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotRegisterUser, http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
@@ -114,14 +114,14 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 
 		if login == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'login' parameter in request")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -130,10 +130,10 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 		user, err := userService.GetUserByLogin(context.Background(), &us.UserLoginRequest{Login: login})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get user by login")
-			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
+			handler.ErrorResponse(s, w, r, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, user, http.StatusOK)
+		handler.Response(s, w, r, user, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by login handler")
 	}
@@ -147,14 +147,14 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		userID := mux.Vars(r)["id"]
 		if userID == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestParameters, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -163,10 +163,10 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: userID})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get user by ID")
-			handler.ErrorResponse(w, errors.ErrUserNotFound, http.StatusNotFound)
+			handler.ErrorResponse(s, w, r, errors.ErrUserNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, user, http.StatusOK)
+		handler.Response(s, w, r, user, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get user by ID handler")
 	}
@@ -181,7 +181,7 @@ func UpdateUserHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &user)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 
@@ -190,7 +190,7 @@ func UpdateUserHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetUserServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to UserService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -200,13 +200,13 @@ func UpdateUserHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update user")
 			if errors.ErrInvalidUserModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidUserModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidUserModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotUpdateUser, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotUpdateUser, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, u, http.StatusOK)
+		handler.Response(s, w, r, u, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update user handler")
 	}

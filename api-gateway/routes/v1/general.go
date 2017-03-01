@@ -8,22 +8,15 @@ import (
 	"github.com/gkarlik/expense-tracker/api-gateway/handlers/v1"
 	"github.com/gkarlik/expense-tracker/shared/handler"
 	"github.com/gkarlik/quark-go"
-	auth "github.com/gkarlik/quark-go/auth/jwt"
-	"github.com/gkarlik/quark-go/logger"
-	"github.com/gkarlik/quark-go/ratelimiter"
+	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
+	em "github.com/gkarlik/quark-go/middleware/error"
+	"github.com/gkarlik/quark-go/middleware/logging"
+	mm "github.com/gkarlik/quark-go/middleware/metrics"
+	"github.com/gkarlik/quark-go/middleware/ratelimiter"
+	"github.com/gkarlik/quark-go/middleware/security"
+	tm "github.com/gkarlik/quark-go/middleware/tracing"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 	"github.com/urfave/negroni"
-	"golang.org/x/net/context"
-)
-
-var limterMiddlewareHandler = negroni.HandlerFunc(
-	ratelimiter.NewHTTPRateLimiter(100 * time.Millisecond).HandleWithNext,
-)
-
-var limterMiddleware = negroni.New(
-	requestTraceMiddleware,
-	limterMiddlewareHandler,
 )
 
 var authenticationMiddlewareHandler = auth.NewAuthenticationMiddleware(
@@ -34,23 +27,32 @@ var authenticationMiddlewareHandler = auth.NewAuthenticationMiddleware(
 	}),
 )
 
-var authenticationMiddleware = negroni.HandlerFunc(authenticationMiddlewareHandler.AuthenticateWithNext)
+func CreateLimiterMiddleware(s quark.Service) *negroni.Negroni {
+	var limterMiddleware = negroni.HandlerFunc(ratelimiter.NewRateLimiterMiddleware(100 * time.Millisecond).HandleWithNext)
+	var logRequestMiddleware = negroni.HandlerFunc(logging.NewRequestLoggingMiddleware(handler.RequestIDKey).HandleWithNext)
+	var errorMiddleware = negroni.HandlerFunc(em.NewRequestErrorMiddleware().HandleWithNext)
+	var metricsMiddleware = negroni.HandlerFunc(mm.NewRequestMetricsMiddleware(s).HandleWithNext)
+	var tracingMiddleware = negroni.HandlerFunc(tm.NewRequestTracingMiddleware(s).HandleWithNext)
+	var securityMiddleware = negroni.HandlerFunc(security.NewRequestSecurityMiddleware().HandleWithNext)
 
-var requestTraceMiddleware = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	reqID := uuid.NewV4()
-	ctx := context.WithValue(r.Context(), handler.RequestIDKey, reqID.String())
-	r = r.WithContext(ctx)
+	return negroni.New(
+		metricsMiddleware,
+		errorMiddleware,
+		securityMiddleware,
+		tracingMiddleware,
+		logRequestMiddleware,
+		limterMiddleware,
+	)
+}
 
-	logger.Log().DebugWithFields(logger.Fields{"requestID": reqID, "request": r}, "Received request")
+func CreateCommonMiddleware(s quark.Service) *negroni.Negroni {
+	var authenticationMiddleware = negroni.HandlerFunc(authenticationMiddlewareHandler.AuthenticateWithNext)
+	limiterMiddleware := CreateLimiterMiddleware(s)
 
-	next(w, r)
-})
-
-var commonMiddleware = negroni.New(
-	requestTraceMiddleware,
-	limterMiddlewareHandler,
-	authenticationMiddleware,
-)
+	return limiterMiddleware.With(
+		authenticationMiddleware,
+	)
+}
 
 func Init(r *mux.Router, s quark.Service) *mux.Router {
 	authenticationMiddlewareHandler.Options.Authenticate = func(credentials auth.Credentials) (auth.Claims, error) {
@@ -58,6 +60,8 @@ func Init(r *mux.Router, s quark.Service) *mux.Router {
 	}
 
 	api := r.PathPrefix("/api/v1").Subrouter()
+
+	limterMiddleware := CreateLimiterMiddleware(s)
 
 	api.Handle("/auth", limterMiddleware.With(
 		negroni.Wrap(http.HandlerFunc(authenticationMiddlewareHandler.GenerateToken))),

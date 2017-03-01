@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gkarlik/expense-tracker/shared/errors"
-	auth "github.com/gkarlik/quark-go/auth/jwt"
+	"github.com/gkarlik/quark-go"
+	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -16,6 +18,8 @@ const (
 	UserClaimsKey      = "USER_KEY"
 	UserIDKey          = "UserID"
 	RequestIDKey       = "Request-ID"
+	ErrorKey           = "Error"
+	ErrorMetricName    = "errors"
 )
 
 func GetUserID(r *http.Request) string {
@@ -34,8 +38,12 @@ func GetRequestID(r *http.Request) string {
 		return uuid.NewV4().String()
 	}
 
-	reqID := r.Context().Value(RequestIDKey).(string)
+	fmt.Println(r.Context())
 
+	reqID, ok := r.Context().Value(RequestIDKey).(string)
+	if !ok {
+		return ""
+	}
 	return reqID
 }
 
@@ -54,25 +62,27 @@ func ParseRequestData(r *http.Request, in interface{}) ([]byte, error) {
 	return b, nil
 }
 
-func Response(w http.ResponseWriter, in interface{}, code int) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
-		return
-	}
+func setResponse(w http.ResponseWriter, data []byte, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
 	w.Write(data)
 }
 
-func ErrorResponse(w http.ResponseWriter, e *errors.Error, code int) {
+func Response(s quark.Service, w http.ResponseWriter, r *http.Request, in interface{}, code int) {
+	data, err := json.Marshal(in)
+	if err != nil {
+		ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
+		return
+	}
+	setResponse(w, data, code)
+}
+
+func ErrorResponse(s quark.Service, w http.ResponseWriter, r *http.Request, e *errors.Error, code int) {
+	quark.ReportError(s, r, ErrorKey, ErrorMetricName, e)
+
 	data, err := json.Marshal(e)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-	w.WriteHeader(code)
-	w.Write(data)
+	setResponse(w, data, code)
 }

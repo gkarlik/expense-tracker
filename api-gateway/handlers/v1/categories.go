@@ -22,7 +22,7 @@ func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		category.UserID = handler.GetUserID(r)
@@ -32,7 +32,7 @@ func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -42,13 +42,13 @@ func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create category")
 			if errors.ErrInvalidCategoryModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, c, http.StatusCreated)
+		handler.Response(s, w, r, c, http.StatusCreated)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing create category handler")
 	}
@@ -63,7 +63,7 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		category.UserID = handler.GetUserID(r)
@@ -73,7 +73,7 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -83,13 +83,13 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update category")
 			if errors.ErrInvalidCategoryModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidCategoryModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotUpdateCategory, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, c, http.StatusOK)
+		handler.Response(s, w, r, c, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update category handler")
 	}
@@ -103,14 +103,14 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 		id := mux.Vars(r)["id"]
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -119,10 +119,10 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 		c, err := expenseService.GetCategory(context.Background(), &es.CategoryIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get category by ID")
-			handler.ErrorResponse(w, errors.ErrCategoryNotFound, http.StatusNotFound)
+			handler.ErrorResponse(s, w, r, errors.ErrCategoryNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, c, http.StatusOK)
+		handler.Response(s, w, r, c, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get category handler")
 	}
@@ -136,14 +136,14 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		id := mux.Vars(r)["id"]
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -152,7 +152,7 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		_, err = expenseService.RemoveCategory(context.Background(), &es.CategoryIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
-			handler.ErrorResponse(w, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -176,14 +176,14 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 		page, err := strconv.Atoi(p)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Invalid 'page' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -196,13 +196,13 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 		})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get categories")
-			handler.ErrorResponse(w, errors.ErrCannotGetCategories, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotGetCategories, http.StatusInternalServerError)
 			return
 		}
 		if len(cs.Categories) == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			handler.Response(w, cs, http.StatusOK)
+			handler.Response(s, w, r, cs, http.StatusOK)
 		}
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get categories handler")

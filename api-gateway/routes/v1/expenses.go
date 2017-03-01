@@ -10,6 +10,8 @@ import (
 )
 
 func InitExpensesRoutes(api *mux.Router, s quark.Service) {
+	commonMiddleware := CreateCommonMiddleware(s)
+
 	api.Handle("/expenses", commonMiddleware.With(
 		negroni.Wrap(v1.GetExpensesHandler(s))),
 	).Methods(http.MethodGet)

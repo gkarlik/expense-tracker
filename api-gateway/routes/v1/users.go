@@ -10,6 +10,9 @@ import (
 )
 
 func InitUsersRoutes(api *mux.Router, s quark.Service) {
+	commonMiddleware := CreateCommonMiddleware(s)
+	limterMiddleware := CreateLimiterMiddleware(s)
+
 	api.Handle("/users", commonMiddleware.With(
 		negroni.Wrap(v1.GetUserByLoginHandler(s))),
 	).Methods(http.MethodGet)

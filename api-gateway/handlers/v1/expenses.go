@@ -36,7 +36,7 @@ func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		expense.UserID = handler.GetUserID(r)
@@ -46,7 +46,7 @@ func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -56,13 +56,13 @@ func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create expense")
 			if errors.ErrInvalidExpenseModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, e, http.StatusCreated)
+		handler.Response(s, w, r, e, http.StatusCreated)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing create expense handler")
 	}
@@ -77,7 +77,7 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		body, err := handler.ParseRequestData(r, &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot parse request data")
-			handler.ErrorResponse(w, errors.ErrInvalidRequestData, http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestData, http.StatusBadRequest)
 			return
 		}
 		expense.UserID = handler.GetUserID(r)
@@ -87,7 +87,7 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -97,13 +97,13 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update expense")
 			if errors.ErrInvalidExpenseModel.IsSame(err) {
-				handler.ErrorResponse(w, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
+				handler.ErrorResponse(s, w, r, errors.ErrInvalidExpenseModel, http.StatusBadRequest)
 				return
 			}
-			handler.ErrorResponse(w, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotUpdateExpense, http.StatusInternalServerError)
 			return
 		}
-		handler.Response(w, e, http.StatusOK)
+		handler.Response(s, w, r, e, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing update expense handler")
 	}
@@ -117,14 +117,14 @@ func GetExpenseHandler(s quark.Service) http.HandlerFunc {
 		id := mux.Vars(r)["id"]
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -133,10 +133,10 @@ func GetExpenseHandler(s quark.Service) http.HandlerFunc {
 		e, err := expenseService.GetExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get expense by ID")
-			handler.ErrorResponse(w, errors.ErrExpenseNotFound, http.StatusNotFound)
+			handler.ErrorResponse(s, w, r, errors.ErrExpenseNotFound, http.StatusNotFound)
 			return
 		}
-		handler.Response(w, e, http.StatusOK)
+		handler.Response(s, w, r, e, http.StatusOK)
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expense handler")
 	}
@@ -150,14 +150,14 @@ func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
 		id := mux.Vars(r)["id"]
 		if id == "" {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Missing 'ID' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -166,7 +166,7 @@ func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
 		_, err = expenseService.RemoveExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove expense")
-			handler.ErrorResponse(w, errors.ErrCannotRemoveExpense, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveExpense, http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -190,14 +190,14 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 		page, err := strconv.Atoi(p)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID}, "Invalid 'page' parameter in request")
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			handler.ErrorResponse(s, w, r, errors.ErrInvalidRequestParameters, http.StatusBadRequest)
 			return
 		}
 
 		conn, err := GetExpenseServiceConn(s)
 		if err != nil || conn == nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot connect to ExpenseService")
-			handler.ErrorResponse(w, errors.ErrInternal, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrInternal, http.StatusInternalServerError)
 			return
 		}
 		defer conn.Close()
@@ -210,13 +210,13 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 		})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get expenses")
-			handler.ErrorResponse(w, errors.ErrCannotGetExpenses, http.StatusInternalServerError)
+			handler.ErrorResponse(s, w, r, errors.ErrCannotGetExpenses, http.StatusInternalServerError)
 			return
 		}
 		if len(es.Expenses) == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
-			handler.Response(w, es, http.StatusOK)
+			handler.Response(s, w, r, es, http.StatusOK)
 		}
 
 		s.Log().InfoWithFields(logger.Fields{"requestID": reqID}, "Done processing get expenses handler")
