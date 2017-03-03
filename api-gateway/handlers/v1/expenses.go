@@ -11,7 +11,6 @@ import (
 	"github.com/gkarlik/quark-go/logger"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -52,7 +51,7 @@ func CreateExpenseHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		e, err := expenseService.CreateExpense(context.Background(), &expense)
+		e, err := expenseService.CreateExpense(handler.GetContextWithSpan(s, r), &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create expense")
 			if errors.ErrInvalidExpenseModel.IsSame(err) {
@@ -93,7 +92,7 @@ func UpdateExpenseHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		e, err := expenseService.UpdateExpense(context.Background(), &expense)
+		e, err := expenseService.UpdateExpense(handler.GetContextWithSpan(s, r), &expense)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update expense")
 			if errors.ErrInvalidExpenseModel.IsSame(err) {
@@ -130,7 +129,7 @@ func GetExpenseHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		e, err := expenseService.GetExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
+		e, err := expenseService.GetExpense(handler.GetContextWithSpan(s, r), &es.ExpenseIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get expense by ID")
 			handler.ErrorResponse(s, w, r, errors.ErrExpenseNotFound, http.StatusNotFound)
@@ -163,7 +162,7 @@ func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		_, err = expenseService.RemoveExpense(context.Background(), &es.ExpenseIDRequest{ID: id})
+		_, err = expenseService.RemoveExpense(handler.GetContextWithSpan(s, r), &es.ExpenseIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove expense")
 			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveExpense, http.StatusInternalServerError)
@@ -203,7 +202,7 @@ func GetExpensesHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		es, err := expenseService.GetUserExpenses(context.Background(), &es.UserPagingRequest{
+		es, err := expenseService.GetUserExpenses(handler.GetContextWithSpan(s, r), &es.UserPagingRequest{
 			Limit:  handler.ExpensesPageSize,
 			Offset: int32(page) * handler.ExpensesPageSize,
 			UserID: handler.GetUserID(r),

@@ -97,6 +97,9 @@ func UpgradeDatabase(s quark.Service) error {
 }
 
 func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.ExpenseResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_get_expense", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -118,6 +121,9 @@ func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDReq
 }
 
 func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExpenseRequest) (*proxy.ExpenseResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_create_expense", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -150,6 +156,9 @@ func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExp
 }
 
 func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExpenseRequest) (*proxy.ExpenseResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_update_expense", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -182,6 +191,9 @@ func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExp
 }
 
 func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.EmptyResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_remove_expense", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -200,6 +212,9 @@ func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseID
 }
 
 func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.ExpensesResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_get_user_expenses", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -229,6 +244,9 @@ func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPag
 }
 
 func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.CategoryResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_get_category", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -248,6 +266,9 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 }
 
 func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCategoryRequest) (*proxy.CategoryResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_create_category", ctx)
+	defer span.Finish()
+		
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -278,6 +299,9 @@ func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCa
 }
 
 func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCategoryRequest) (*proxy.CategoryResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_update_category", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -308,6 +332,9 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCa
 }
 
 func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.EmptyResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_remove_category", ctx)
+	defer span.Finish()
+		
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -326,6 +353,9 @@ func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.Category
 }
 
 func (es *ExpenseService) GetUserCategories(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.CategoriesResponse, error) {
+	span := quark.StartRPCSpan(service, "expense_service_get_user_categories", ctx)
+	defer span.Finish()
+	
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err

@@ -10,7 +10,6 @@ import (
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/logger"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
 )
 
 func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
@@ -38,7 +37,7 @@ func CreateCategoryHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		c, err := expenseService.CreateCategory(context.Background(), &category)
+		c, err := expenseService.CreateCategory(handler.GetContextWithSpan(s, r), &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot create category")
 			if errors.ErrInvalidCategoryModel.IsSame(err) {
@@ -79,7 +78,7 @@ func UpdateCategoryHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		c, err := expenseService.UpdateCategory(context.Background(), &category)
+		c, err := expenseService.UpdateCategory(handler.GetContextWithSpan(s, r), &category)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update category")
 			if errors.ErrInvalidCategoryModel.IsSame(err) {
@@ -116,7 +115,7 @@ func GetCategoryHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		c, err := expenseService.GetCategory(context.Background(), &es.CategoryIDRequest{ID: id})
+		c, err := expenseService.GetCategory(handler.GetContextWithSpan(s, r), &es.CategoryIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get category by ID")
 			handler.ErrorResponse(s, w, r, errors.ErrCategoryNotFound, http.StatusNotFound)
@@ -149,7 +148,7 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		_, err = expenseService.RemoveCategory(context.Background(), &es.CategoryIDRequest{ID: id})
+		_, err = expenseService.RemoveCategory(handler.GetContextWithSpan(s, r), &es.CategoryIDRequest{ID: id})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
 			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
@@ -189,7 +188,7 @@ func GetCategoriesHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		expenseService := es.NewExpenseServiceClient(conn)
-		cs, err := expenseService.GetUserCategories(context.Background(), &es.UserPagingRequest{
+		cs, err := expenseService.GetUserCategories(handler.GetContextWithSpan(s, r), &es.UserPagingRequest{
 			Limit:  handler.CategoriesPageSize,
 			Offset: int32(page) * handler.CategoriesPageSize,
 			UserID: handler.GetUserID(r),

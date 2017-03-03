@@ -13,8 +13,8 @@ import (
 	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"golang.org/x/net/context"
 )
 
 func GetUserServiceConn(s quark.Service) (*grpc.ClientConn, error) {
@@ -52,7 +52,7 @@ func RegisterUserHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		userService := us.NewUserServiceClient(conn)
-		_, err = userService.RegisterUser(context.Background(), &user)
+		_, err = userService.RegisterUser(handler.GetContextWithSpan(s, r), &user)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot register user")
 			if errors.ErrUserAlreadyExists.IsSame(err) {
@@ -127,7 +127,7 @@ func GetUserByLoginHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		userService := us.NewUserServiceClient(conn)
-		user, err := userService.GetUserByLogin(context.Background(), &us.UserLoginRequest{Login: login})
+		user, err := userService.GetUserByLogin(handler.GetContextWithSpan(s, r), &us.UserLoginRequest{Login: login})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get user by login")
 			handler.ErrorResponse(s, w, r, errors.ErrUserNotFound, http.StatusNotFound)
@@ -160,7 +160,7 @@ func GetUserByIDHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		userService := us.NewUserServiceClient(conn)
-		user, err := userService.GetUserByID(context.Background(), &us.UserIDRequest{ID: userID})
+		user, err := userService.GetUserByID(handler.GetContextWithSpan(s, r), &us.UserIDRequest{ID: userID})
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot get user by ID")
 			handler.ErrorResponse(s, w, r, errors.ErrUserNotFound, http.StatusNotFound)
@@ -196,7 +196,7 @@ func UpdateUserHandler(s quark.Service) http.HandlerFunc {
 		defer conn.Close()
 
 		userService := us.NewUserServiceClient(conn)
-		u, err := userService.UpdateUser(context.Background(), &user)
+		u, err := userService.UpdateUser(handler.GetContextWithSpan(s, r), &user)
 		if err != nil {
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot update user")
 			if errors.ErrInvalidUserModel.IsSame(err) {

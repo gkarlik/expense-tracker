@@ -10,6 +10,9 @@ import (
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
 	uuid "github.com/satori/go.uuid"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/metadata"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -21,6 +24,17 @@ const (
 	ErrorKey           = "Error"
 	ErrorMetricName    = "errors"
 )
+
+func GetContextWithSpan(s quark.Service, r *http.Request) context.Context {
+	ctx := context.Background()
+	if span := s.Tracer().SpanFromContext(r.Context()); span != nil {
+		md := metadata.Pairs()
+		if err := s.Tracer().InjectSpan(span, opentracing.TextMap, quark.RPCMetadataCarrier{MD: &md}); err != nil {
+			ctx = metadata.NewContext(context.Background(), md)
+		}
+	}
+	return ctx	
+}
 
 func GetUserID(r *http.Request) string {
 	if r == nil {
