@@ -35,14 +35,7 @@ traits:
                 body:
                     text/plain:
                         example:
-                            Unauthorized         
-    hasInternalServerError:
-        responses:
-             500:
-                body:
-                    text/plain:
-                        example:
-                            Internal server error
+                            Unauthorized             
     hasNotFound:
         responses:
             404:
@@ -61,16 +54,30 @@ traits:
     hasCategoryNotFound:
         responses:
             404:
-                    body:
+                body:
+                    example:
+                        code: 1010
+                        message: Category not found
+                        documentationUrl: https://et.eu/api/documentation/errors?id=1010
+    hasTooManyRequests:
+        responses:
+            429: 
+                body:
+                    text/plain:
                         example:
-                            code: 1010
-                            message: Category not found
-                            documentationUrl: https://et.eu/api/documentation/errors?id=1010
+                            Too Many Requests
+    hasInternalServerError:
+        responses:
+             500:
+                body:
+                    text/plain:
+                        example:
+                            Internal server error
 /auth:
     description: Endpoint used to authenticate user in Expense Tracker.
     post:        
         description: Authenticate user with credentials.
-        is: [hasUnauthorized]
+        is: [hasUnauthorized, hasTooManyRequests]
         body:
             examples:
                 Credentials with password and pin:
@@ -92,7 +99,7 @@ traits:
     description: Endpoint used to manage users in Expense Tracker.
     get:        
         description: Receive a specific user by login name.
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasUserNotFound, hasAuthHeader]        
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasUserNotFound, hasAuthHeader, hasTooManyRequests]        
         queryParameters:
             l:
                 displayName: Login
@@ -110,7 +117,7 @@ traits:
                         LastName: Test                                            
     /{id}:
         get:
-            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasUserNotFound, hasAuthHeader]
+            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasUserNotFound, hasAuthHeader, hasTooManyRequests]
             description: Receive a specific user by ID.
             responses:
                 200:
@@ -121,7 +128,7 @@ traits:
                             FirstName: Joe
                             LastName: Test       
     post:
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Insert new user.
         body:
             example:
@@ -139,7 +146,7 @@ traits:
                         message: User already exists
                         documentationUrl: https://et.eu/api/documentation/errors?id=1005
     put:
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Update existing user.
         body:
             example:
@@ -164,7 +171,7 @@ traits:
     /{id}:
         get: 
             description: Receives expense category by ID.
-            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasCategoryNotFound, hasAuthHeader]
+            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasCategoryNotFound, hasAuthHeader, hasTooManyRequests]
             responses:
                 200:
                     body:
@@ -177,7 +184,7 @@ traits:
             is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasNoContent, hasAuthHeader]
     get:
         description: Get expense categories for current user. 
-        is: [hasUnauthorized, hasAuthHeader, hasInvalidRequestParams, hasInternalServerError, hasNotFound]
+        is: [hasUnauthorized, hasAuthHeader, hasInvalidRequestParams, hasInternalServerError, hasNotFound, hasTooManyRequests]
         queryParameters:
             p:
                 displayName: Page
@@ -197,7 +204,7 @@ traits:
                               Name: Test 2
                               Limit: 101.21                      
     post:
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Insert new expense category.
         body:
             example:
@@ -211,7 +218,7 @@ traits:
                         Name: Test
                         Limit: 101.21
     put:      
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Update existing expense category.
         body:
             example:
@@ -230,7 +237,7 @@ traits:
     /{id}:
         get: 
             description: Receives expense by ID.
-            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasCategoryNotFound, hasAuthHeader]
+            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasCategoryNotFound, hasAuthHeader, hasTooManyRequests]
             responses:
                 200:
                     body:
@@ -241,10 +248,10 @@ traits:
                             CategoryID: 4ed74ec1-eb4b-42a2-9028-9fc6aec3bb2d
         delete:     
             description: Removes expense by ID.
-            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasNoContent, hasAuthHeader]
+            is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasNoContent, hasAuthHeader, hasTooManyRequests]
     get:
         description: Get expenses for current user. 
-        is: [hasUnauthorized, hasAuthHeader, hasInvalidRequestParams, hasInternalServerError, hasNotFound]
+        is: [hasUnauthorized, hasAuthHeader, hasInvalidRequestParams, hasInternalServerError, hasNotFound, hasTooManyRequests]
         queryParameters:
             p:
                 displayName: Page
@@ -266,7 +273,7 @@ traits:
                               Value: 121.10
                               CategoryID: 2ed44ec1-eb4b-42a2-9028-9fc6aec3bb2d                      
     post:
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Insert new expense.
         body:
             example:                
@@ -282,7 +289,7 @@ traits:
                         Value: 1521.20
                         CategoryID: 4ed74ec1-eb4b-42a2-9028-9fc6aec3bb2d
     put:      
-        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader]
+        is: [hasUnauthorized, hasInvalidRequestParams, hasInternalServerError, hasAuthHeader, hasTooManyRequests]
         description: Update existing expense.
         body:
             example:
