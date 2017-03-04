@@ -28,7 +28,7 @@ var authenticationMiddlewareHandler = auth.NewAuthenticationMiddleware(
 )
 
 func CreateLimiterMiddleware(s quark.Service) *negroni.Negroni {
-	var limterMiddleware = negroni.HandlerFunc(ratelimiter.NewRateLimiterMiddleware(100 * time.Millisecond).HandleWithNext)
+	var limterMiddleware = negroni.HandlerFunc(ratelimiter.NewRateLimiterMiddleware(10 * time.Millisecond).HandleWithNext)
 	var logRequestMiddleware = negroni.HandlerFunc(logging.NewRequestLoggingMiddleware(handler.RequestIDKey).HandleWithNext)
 	var errorMiddleware = negroni.HandlerFunc(em.NewRequestErrorMiddleware().HandleWithNext)
 	var metricsMiddleware = negroni.HandlerFunc(mm.NewRequestMetricsMiddleware(s).HandleWithNext)
