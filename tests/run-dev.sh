@@ -1,0 +1,1 @@
+newman run Expense_Tracker_API_Tests.json -e Development_Environment.json --color

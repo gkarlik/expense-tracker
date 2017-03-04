@@ -1,0 +1,75 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Expense Tracker API tests",
+		"_postman_id": "ff51f0dc-7150-72de-8473-afea5d86d07e",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register new user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 201 - Created\"] = responseCode.code === 201;",
+							"tests[\"Response time is less than 300ms\"] = responseTime <= 300;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Register existing user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 409 - Conflict\"] = responseCode.code === 409;",
+							"tests[\"Response time is less than 100ms\"] = responseTime < 100;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
