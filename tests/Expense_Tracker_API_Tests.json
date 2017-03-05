@@ -74,7 +74,7 @@
 			"response": []
 		},
 		{
-			"name": "Authenticate user",
+			"name": "Authenticate user - success",
 			"event": [
 				{
 					"listen": "test",
@@ -112,6 +112,40 @@
 			"response": []
 		},
 		{
+			"name": "Authenticate user - failure",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 401 - Unauthorized\"] = responseCode.code === 401;",
+							"tests[\"Response time is less than 200ms\"] = responseTime <= 200;",
+							"tests[\"Content-Type header is present and value is 'text/plain; charset=utf-8'\"] = postman.getResponseHeader(\"Content-Type\") == \"text/plain; charset=utf-8\";",
+							"tests[\"Body contains Unauthorized\"] = responseBody.has(\"Unauthorized\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/auth",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Username\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test123\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Find user by login",
 			"event": [
 				{
@@ -129,7 +163,7 @@
 							"tests[\"Lastname is Karlik\"] = jsonData.LastName === \"Karlik\";",
 							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";",
 							"",
-							"// set user ID as global variable",
+							"// set user-id as global variable",
 							"postman.setGlobalVariable(\"user-id\", jsonData.ID);"
 						]
 					}
@@ -137,6 +171,45 @@
 			],
 			"request": {
 				"url": "http://{{host}}:{{port}}/api/v1/users?l=grzegorz.karlik@gmail.com",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Find user by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"tests[\"Response time is less than 50ms\"] = responseTime <= 100;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Firstname is Grzegorz\"] = jsonData.FirstName === \"Grzegorz\";",
+							"tests[\"Lastname is Karlik\"] = jsonData.LastName === \"Karlik\";",
+							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";",
+							"",
+							"// clear user-id",
+							"postman.clearGlobalVariable(\"user-id\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users/{{user-id}}",
 				"method": "GET",
 				"header": [
 					{
