@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "Expense Tracker API tests",
-		"_postman_id": "ff51f0dc-7150-72de-8473-afea5d86d07e",
+		"_postman_id": "1dec2c30-5900-38ff-adb6-b557207be334",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -68,6 +68,82 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Register user - invalid payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Response time is less than 100ms\"] = responseTime < 100;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1002;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid request data\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\",\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Register user - invalid user data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Response time is less than 250ms\"] = responseTime < 250;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1008;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid user model\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Test\": \"test\"\n}"
 				},
 				"description": ""
 			},
@@ -179,7 +255,10 @@
 						"description": ""
 					}
 				],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"description": ""
 			},
 			"response": []
@@ -218,7 +297,10 @@
 						"description": ""
 					}
 				],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"description": ""
 			},
 			"response": []
