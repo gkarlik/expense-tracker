@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "Expense Tracker API tests",
-		"_postman_id": "1dec2c30-5900-38ff-adb6-b557207be334",
+		"_postman_id": "e1dc204a-704c-2a4f-c034-a36fbda5af8a",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -16,9 +16,10 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 201 - Created\"] = responseCode.code === 201;",
-							"tests[\"Response time is less than 300ms\"] = responseTime <= 300;",
 							"tests[\"Content-Type header is present and value is 'text/plain; charset=utf-8'\"] = postman.getResponseHeader(\"Content-Type\") == \"text/plain; charset=utf-8\";",
-							""
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;"
 						]
 					}
 				}
@@ -50,7 +51,9 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 409 - Conflict\"] = responseCode.code === 409;",
-							"tests[\"Response time is less than 100ms\"] = responseTime < 100;"
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;"
 						]
 					}
 				}
@@ -82,8 +85,10 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
-							"tests[\"Response time is less than 100ms\"] = responseTime < 100;",
 							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
 							"",
 							"// validate response",
 							"var jsonData = JSON.parse(responseBody);",
@@ -120,8 +125,10 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
-							"tests[\"Response time is less than 250ms\"] = responseTime < 250;",
 							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
 							"",
 							"// validate response",
 							"var jsonData = JSON.parse(responseBody);",
@@ -158,9 +165,11 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 150ms\"] = responseTime <= 200;",
 							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
 							"tests[\"Body contains token string\"] = responseBody.has(\"token\");",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
 							"",
 							"// set token as global variable",
 							"var jsonData = JSON.parse(responseBody);",
@@ -196,9 +205,11 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 401 - Unauthorized\"] = responseCode.code === 401;",
-							"tests[\"Response time is less than 200ms\"] = responseTime <= 200;",
 							"tests[\"Content-Type header is present and value is 'text/plain; charset=utf-8'\"] = postman.getResponseHeader(\"Content-Type\") == \"text/plain; charset=utf-8\";",
-							"tests[\"Body contains Unauthorized\"] = responseBody.has(\"Unauthorized\");"
+							"tests[\"Body contains Unauthorized\"] = responseBody.has(\"Unauthorized\");",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;"
 						]
 					}
 				}
@@ -230,17 +241,19 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 50ms\"] = responseTime <= 100;",
 							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
 							"",
 							"// validate response",
 							"var jsonData = JSON.parse(responseBody);",
-							"tests[\"Firstname is Grzegorz\"] = jsonData.FirstName === \"Grzegorz\";",
-							"tests[\"Lastname is Karlik\"] = jsonData.LastName === \"Karlik\";",
+							"tests[\"FirstName is Grzegorz\"] = jsonData.FirstName === \"Grzegorz\";",
+							"tests[\"LastName is Karlik\"] = jsonData.LastName === \"Karlik\";",
 							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";",
 							"",
-							"// set user-id as global variable",
-							"postman.setGlobalVariable(\"user-id\", jsonData.ID);"
+							"// set user-id as environment variable",
+							"postman.setEnvironmentVariable(\"user-id\", jsonData.ID);"
 						]
 					}
 				}
@@ -264,6 +277,46 @@
 			"response": []
 		},
 		{
+			"name": "Update user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"FirstName is Grzegorz\"] = jsonData.FirstName === \"Grzegorz\";",
+							"tests[\"LastName is Karlik\"] = jsonData.LastName === \"Karlik2\";",
+							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ID\": \"{{user-id}}\",\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik2\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Find user by ID",
 			"event": [
 				{
@@ -272,17 +325,16 @@
 						"type": "text/javascript",
 						"exec": [
 							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
-							"tests[\"Response time is less than 50ms\"] = responseTime <= 100;",
 							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
 							"",
 							"// validate response",
 							"var jsonData = JSON.parse(responseBody);",
 							"tests[\"Firstname is Grzegorz\"] = jsonData.FirstName === \"Grzegorz\";",
-							"tests[\"Lastname is Karlik\"] = jsonData.LastName === \"Karlik\";",
-							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";",
-							"",
-							"// clear user-id",
-							"postman.clearGlobalVariable(\"user-id\");"
+							"tests[\"Lastname is Karlik2\"] = jsonData.LastName === \"Karlik2\";",
+							"tests[\"Login is grzegorz.karlik@gmail.com\"] = jsonData.Login === \"grzegorz.karlik@gmail.com\";"
 						]
 					}
 				}
