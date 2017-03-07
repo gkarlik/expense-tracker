@@ -252,13 +252,23 @@ func (us *UserService) UpdateUser(ctx context.Context, in *proxy.UpdateUserReque
 	}
 	defer context.Dispose()
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	hashedPin, err := bcrypt.GenerateFromPassword([]byte(in.Pin), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
 	user := &model.User{
 		ID:        in.ID,
 		FirstName: in.FirstName,
 		LastName:  in.LastName,
 		Login:     in.Login,
-		Password:  in.Password,
-		Pin:       in.Pin,
+		Password:  string(hashedPassword),
+		Pin:       string(hashedPin),
 	}
 
 	if ok := user.IsValid(); !ok {
