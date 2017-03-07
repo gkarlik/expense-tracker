@@ -97,7 +97,11 @@ func UpgradeDatabase(s quark.Service) error {
 func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) (*proxy.RegisterUserResponse, error) {
 	span := quark.StartRPCSpan(service, "user_service_register_user", ctx)
 	defer span.Finish()
-	
+
+	if (proxy.UserRequest{}) == *in {
+		return nil, errors.ErrInvalidUserModel
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -147,7 +151,11 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCredentialsRequest) (*proxy.UserIDResponse, error) {
 	span := quark.StartRPCSpan(service, "user_service_authenticate_user", ctx)
 	defer span.Finish()
-	
+
+	if in.Login == "" {
+		return nil, errors.ErrInvalidRequestData
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -177,7 +185,11 @@ func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCrede
 func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest) (*proxy.UserResponse, error) {
 	span := quark.StartRPCSpan(service, "user_service_get_user_by_id", ctx)
 	defer span.Finish()
-	
+
+	if in.ID == "" {
+		return nil, errors.ErrInvalidRequestParameters
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -202,6 +214,10 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 	span := quark.StartRPCSpan(service, "user_service_get_user_by_login", ctx)
 	defer span.Finish()
 
+	if in.Login == "" {
+		return nil, errors.ErrInvalidRequestParameters
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -225,7 +241,11 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 func (us *UserService) UpdateUser(ctx context.Context, in *proxy.UpdateUserRequest) (*proxy.UserResponse, error) {
 	span := quark.StartRPCSpan(service, "user_service_update_user", ctx)
 	defer span.Finish()
-	
+
+	if (proxy.UpdateUserRequest{}) == *in {
+		return nil, errors.ErrInvalidUserModel
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -242,7 +262,7 @@ func (us *UserService) UpdateUser(ctx context.Context, in *proxy.UpdateUserReque
 	}
 
 	if ok := user.IsValid(); !ok {
-		return nil, errors.ErrInvalidCategoryModel
+		return nil, errors.ErrInvalidUserModel
 	}
 
 	repo := model.NewUserRepository(context)
