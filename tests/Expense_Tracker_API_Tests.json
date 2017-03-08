@@ -157,7 +157,7 @@
 			"response": []
 		},
 		{
-			"name": "Authenticate user - success",
+			"name": "Authenticate user",
 			"event": [
 				{
 					"listen": "test",
@@ -233,6 +233,86 @@
 			"response": []
 		},
 		{
+			"name": "Find user by login - invalid parameter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1004\"] = jsonData.code === 1004;",
+							"tests[\"Error message is Missing or invalid request parameters\"] = jsonData.message === \"Missing or invalid request parameters\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users?p=grzegorz.karlik@gmail.com",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Find user by login - user not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 404 - Not Found\"] = responseCode.code === 404;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1006\"] = jsonData.code === 1006;",
+							"tests[\"Error message is User not found\"] = jsonData.message === \"User not found\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users?l=grzegorz.karlik2@gmail.com",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Find user by login",
 			"event": [
 				{
@@ -277,6 +357,123 @@
 			"response": []
 		},
 		{
+			"name": "Update user - invalid payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1002;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid request data\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ID\": \"{{user-id}}\",\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik2\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\",\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update user - invalid user data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1008;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid user model\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Test\": \"test\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update user - invalid ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 500 - Internal Server Error\"] = responseCode.code === 500;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1009\"] = jsonData.code === 1009;",
+							"tests[\"Error message is Cannot update user\"] = jsonData.message === \"Cannot update user\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ID\": \"invalid id\",\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik2\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Update user",
 			"event": [
 				{
@@ -311,6 +508,47 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\n\t\"ID\": \"{{user-id}}\",\n\t\"FirstName\": \"Grzegorz\",\n\t\"LastName\": \"Karlik2\",\n\t\"Login\": \"grzegorz.karlik@gmail.com\",\n\t\"Password\": \"test\",\n\t\"Pin\": \"1111\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Find user by ID - user not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 404 - Not Found\"] = responseCode.code === 404;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1006\"] = jsonData.code === 1006;",
+							"tests[\"Error message is User not found\"] = jsonData.message === \"User not found\";",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/users/1234567890",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
 				},
 				"description": ""
 			},
