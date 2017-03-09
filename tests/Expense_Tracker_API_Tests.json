@@ -594,6 +594,54 @@
 				"description": ""
 			},
 			"response": []
+		},
+		{
+			"name": "Create category",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 201 - Created\"] = responseCode.code === 201;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Name is Test Category\"] = jsonData.Name === \"Test Category\";",
+							"tests[\"Limit is 1500.22\"] = jsonData.Limit === 1500.22;",
+							"",
+							"// set category-id as environment variable",
+							"postman.setEnvironmentVariable(\"category-id\", jsonData.ID);"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Name\": \"Test Category\",\n\t\"Limit\": 1500.22\n}"
+				},
+				"description": ""
+			},
+			"response": []
 		}
 	]
 }
