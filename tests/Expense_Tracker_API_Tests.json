@@ -642,6 +642,57 @@
 				"description": ""
 			},
 			"response": []
+		},
+		{
+			"name": "Create expense",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 201 - Created\"] = responseCode.code === 201;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"categoryID = postman.getEnvironmentVariable(\"category-id\")",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Date is 1489049222\"] = jsonData.Date === 1489049222;",
+							"tests[\"Value is 150.12\"] = jsonData.Value === 150.12;",
+							"tests[\"CategoryID is \" + categoryID] = jsonData.CategoryID === categoryID;",
+							"",
+							"// set expense-id as environment variable",
+							"postman.setEnvironmentVariable(\"expense-id\", jsonData.ID);"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/expenses",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Date\": 1489049222,\n\t\"Value\": 150.12,\n\t\"CategoryID\": \"{{category-id}}\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
 		}
 	]
 }
