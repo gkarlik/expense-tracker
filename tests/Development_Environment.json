@@ -18,29 +18,23 @@
       "enabled": true,
       "key": "response_time_limit",
       "type": "text",
-      "value": "250"
+      "value": "300"
     },
     {
       "enabled": true,
       "key": "user-id",
       "type": "text",
-      "value": "a53d78eb-c958-4224-811d-736498570994"
-    },
-    {
-      "enabled": true,
-      "key": "category-id",
-      "type": "text",
-      "value": "4172e1d9-81b0-49b1-8f82-34b5c73bf659"
+      "value": "e04229ce-bf0c-4dc3-9355-8d80ffc1b24f"
     },
     {
       "enabled": true,
       "key": "expense-id",
       "type": "text",
-      "value": "c1c19f15-2fe4-4efb-9e91-d26b7d66d417"
+      "value": "21e4f533-6bdd-4336-b9df-30cedb09d4e9"
     }
   ],
-  "timestamp": 1489151517248,
+  "timestamp": 1489153131181,
   "_postman_variable_scope": "environment",
-  "_postman_exported_at": "2017-03-10T13:13:26.572Z",
+  "_postman_exported_at": "2017-03-10T13:39:28.196Z",
   "_postman_exported_using": "Postman/4.10.3"
 }
