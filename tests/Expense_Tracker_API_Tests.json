@@ -2,7 +2,7 @@
 	"variables": [],
 	"info": {
 		"name": "Expense Tracker API tests",
-		"_postman_id": "e1dc204a-704c-2a4f-c034-a36fbda5af8a",
+		"_postman_id": "d132e130-2542-8c76-af38-db5fbd8f514c",
 		"description": "",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
@@ -596,6 +596,96 @@
 			"response": []
 		},
 		{
+			"name": "Create category - invalid payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1002;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid request data\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Name\": \"Test Category\",\n\t\"Limit\": 1500.22,\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create category - invalid category data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1014\"] = jsonData.code === 1014;",
+							"tests[\"Error message is Invalid category model\"] = jsonData.message === \"Invalid category model\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Test\": \"test\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Create category",
 			"event": [
 				{
@@ -638,6 +728,139 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\n\t\"Name\": \"Test Category\",\n\t\"Limit\": 1500.22\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update category - invalid payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1002;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid request data\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ID\": \"{{category-id}}\",\n\t\"Name\": \"Test Category Updated\",\n\t\"Limit\": 1700.22,\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update category - invalid category data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1014\"] = jsonData.code === 1014;",
+							"tests[\"Error message is Invalid category model\"] = jsonData.message === \"Invalid category model\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Test\": \"test\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Update category",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Name is Test Category Updated\"] = jsonData.Name === \"Test Category Updated\";",
+							"tests[\"Limit is 1700.22\"] = jsonData.Limit === 1700.22;",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"ID\": \"{{category-id}}\",\n\t\"Name\": \"Test Category Updated\",\n\t\"Limit\": 1700.22\n}"
 				},
 				"description": ""
 			},
