@@ -150,6 +150,10 @@ func RemoveCategoryHandler(s quark.Service) http.HandlerFunc {
 		expenseService := es.NewExpenseServiceClient(conn)
 		_, err = expenseService.RemoveCategory(handler.GetContextWithSpan(s, r), &es.CategoryIDRequest{ID: id})
 		if err != nil {
+			if errors.ErrCategoryNotFound.IsSame(err) {
+				handler.ErrorResponse(s, w, r, errors.ErrCategoryNotFound, http.StatusNotFound)
+				return
+			}
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove category")
 			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveCategory, http.StatusInternalServerError)
 			return
