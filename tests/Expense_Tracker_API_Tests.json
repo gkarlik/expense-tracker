@@ -867,6 +867,87 @@
 			"response": []
 		},
 		{
+			"name": "Find category by ID - category not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 404 - Not Found\"] = responseCode.code === 404;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1010\"] = jsonData.code === 1010;",
+							"tests[\"Error message is Category not found\"] = jsonData.message === \"Category not found\";",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories/1234567890",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Find category by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Name is Test Category Updated\"] = jsonData.Name === \"Test Category Updated\";",
+							"tests[\"Limit is 1700.22\"] = jsonData.Limit === 1700.22;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories/{{category-id}}",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Create expense",
 			"event": [
 				{
@@ -912,6 +993,84 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\n\t\"Date\": 1489049222,\n\t\"Value\": 150.12,\n\t\"CategoryID\": \"{{category-id}}\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Delete category by ID - category not found",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 404 - Not Found\"] = responseCode.code === 404;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1010\"] = jsonData.code === 1010;",
+							"tests[\"Error message is Category not found\"] = jsonData.message === \"Category not found\";",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories/1234567890",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Delete category by ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 204 - No Content\"] = responseCode.code === 204;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// set category-id as environment variable",
+							"postman.clearEnvironmentVariable(\"category-id\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories/{{category-id}}",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
 				},
 				"description": ""
 			},
