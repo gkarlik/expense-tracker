@@ -267,6 +267,10 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 	span := quark.StartRPCSpan(service, "expense_service_get_category", ctx)
 	defer span.Finish()
 
+	if in.ID == "" {
+		return nil, errors.ErrInvalidRequestParameters
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -288,6 +292,10 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCategoryRequest) (*proxy.CategoryResponse, error) {
 	span := quark.StartRPCSpan(service, "expense_service_create_category", ctx)
 	defer span.Finish()
+
+	if (proxy.CreateCategoryRequest{}) == *in {
+		return nil, errors.ErrInvalidCategoryModel
+	}
 
 	context, err := NewDbContext()
 	if err != nil {
@@ -322,6 +330,10 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCa
 	span := quark.StartRPCSpan(service, "expense_service_update_category", ctx)
 	defer span.Finish()
 
+	if (proxy.UpdateCategoryRequest{}) == *in {
+		return nil, errors.ErrInvalidCategoryModel
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -355,6 +367,10 @@ func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.Category
 	span := quark.StartRPCSpan(service, "expense_service_remove_category", ctx)
 	defer span.Finish()
 
+	if in.ID == "" {
+		return nil, errors.ErrInvalidRequestParameters
+	}
+
 	context, err := NewDbContext()
 	if err != nil {
 		return nil, err
@@ -375,6 +391,10 @@ func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.Category
 func (es *ExpenseService) GetUserCategories(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.CategoriesResponse, error) {
 	span := quark.StartRPCSpan(service, "expense_service_get_user_categories", ctx)
 	defer span.Finish()
+
+	if in.Offset < 0 {
+		return nil, errors.ErrInvalidRequestParameters
+	}
 
 	context, err := NewDbContext()
 	if err != nil {
