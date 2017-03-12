@@ -1063,6 +1063,95 @@
 			"response": []
 		},
 		{
+			"name": "Create expense - invalid payload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1002\"] = jsonData.code === 1002;",
+							"tests[\"Error message is Invalid request data\"] = jsonData.message === \"Invalid request data\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/expenses",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Date\": 1489049222,\n\t\"Value\": 150.12,\n\t\"CategoryID\": \"{{category-id}}\",\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create expense - invalid expense data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 400 - Bad Request\"] = responseCode.code === 400;",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\")",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Error code is 1019\"] = jsonData.code === 1019;",
+							"tests[\"Error message is Invalid expense model\"] = jsonData.message === \"Invalid expense model\";"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/expenses",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Test\": \"test\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Create expense",
 			"event": [
 				{
