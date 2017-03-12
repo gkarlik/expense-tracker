@@ -219,7 +219,7 @@ func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseID
 	repo := model.NewExpenseRepository(context)
 	expense, err := repo.FindByID(in.ID)
 	if err != nil {
-		return nil, err
+		return nil, errors.ErrExpenseNotFound
 	}
 	if err := repo.Delete(expense); err != nil {
 		return nil, err

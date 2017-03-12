@@ -164,6 +164,10 @@ func RemoveExpenseHandler(s quark.Service) http.HandlerFunc {
 		expenseService := es.NewExpenseServiceClient(conn)
 		_, err = expenseService.RemoveExpense(handler.GetContextWithSpan(s, r), &es.ExpenseIDRequest{ID: id})
 		if err != nil {
+			if errors.ErrExpenseNotFound.IsSame(err) {
+				handler.ErrorResponse(s, w, r, errors.ErrExpenseNotFound, http.StatusNotFound)
+				return
+			}
 			s.Log().ErrorWithFields(logger.Fields{"requestID": reqID, "error": err}, "Cannot remove expense")
 			handler.ErrorResponse(s, w, r, errors.ErrCannotRemoveExpense, http.StatusInternalServerError)
 			return
