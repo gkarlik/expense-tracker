@@ -948,6 +948,121 @@
 			"response": []
 		},
 		{
+			"name": "Get user categories - no parameter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\");",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Name is Test Category\"] = jsonData.Categories[0].Name === \"Test Category Updated\";",
+							"tests[\"Limit is 1700.22\"] = jsonData.Categories[0].Limit === 1700.22;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get user categories - first page",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 200 - OK\"] = responseCode.code === 200;",
+							"tests[\"Content-Type header is present and value is 'application/json'\"] = postman.getResponseHeader(\"Content-Type\") == \"application/json\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\");",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;",
+							"",
+							"// validate response",
+							"var jsonData = JSON.parse(responseBody);",
+							"tests[\"Name is Test Category\"] = jsonData.Categories[0].Name === \"Test Category Updated\";",
+							"tests[\"Limit is 1700.22\"] = jsonData.Categories[0].Limit === 1700.22;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories?p=0",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get user categories - empty page",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Response code should be 404 - Not Found\"] = responseCode.code === 404;",
+							"tests[\"Content-Type header is present and value is 'text/plain; charset=utf-8'\"] = postman.getResponseHeader(\"Content-Type\") == \"text/plain; charset=utf-8\";",
+							"",
+							"response_time = postman.getEnvironmentVariable(\"response_time_limit\");",
+							"tests[\"Response time is less than \" + response_time + \"ms\"] = responseTime <= response_time;"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "http://{{host}}:{{port}}/api/v1/categories?p=1",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{authentication-token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
 			"name": "Create expense",
 			"event": [
 				{
