@@ -1,0 +1,36 @@
+version: '2'
+
+services:
+    api-gateway:
+        build:
+            context: ./api-gateway
+            dockerfile: Dockerfile-basic
+        ports:
+            - "9999:9999"
+        
+    expense-service:
+        build:
+            context: ./expense-service/v1
+            dockerfile: Dockerfile-basic
+        ports:
+            - "7777:7777"        
+        depends_on:
+            - api-gateway
+            - database
+
+    user-service:
+        build:
+            context: ./user-service/v1
+            dockerfile: Dockerfile-basic
+        ports:
+            - "6666:6666"
+        depends_on:
+            - api-gateway
+            - database
+
+    database:
+        build:
+            context: ./database
+            dockerfile: Dockerfile-basic
+        ports:
+            - "5432:5432"

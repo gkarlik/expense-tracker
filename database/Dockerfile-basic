@@ -1,0 +1,3 @@
+FROM postgres
+
+ADD init-all.sql /docker-entrypoint-initdb.d/

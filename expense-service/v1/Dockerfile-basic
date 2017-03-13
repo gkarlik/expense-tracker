@@ -1,0 +1,25 @@
+FROM golang
+
+RUN go get github.com/jinzhu/gorm && \
+    go get google.golang.org/grpc && \
+    go get github.com/dgrijalva/jwt-go && \
+    go get github.com/Sirupsen/logrus && \
+    go get golang.org/x/time/rate && \
+    go get github.com/gorilla/mux && \
+    go get github.com/satori/go.uuid && \ 
+    go get github.com/jinzhu/gorm/dialects/postgres && \
+    go get github.com/gkarlik/quark-go && \
+    go get -d github.com/gkarlik/expense-tracker/shared
+
+COPY . /go/src/github.com/gkarlik/expense-tracker/expense-service
+WORKDIR /go/src/github.com/gkarlik/expense-tracker/expense-service
+
+ENV EXPENSE_SERVICE_NAME=ExpenseService \
+    EXPENSE_SERVICE_VERSION=v1 \
+    EXPENSE_SERVICE_PORT=7777 \
+    DISCOVERY=http://api-gateway:9999 \
+    DATABASE_DIALECT=postgres \
+    DATABASE="host=database user=postgres dbname=expense_service sslmode=disable password=" \
+    UPGRADE_DATABASE=1
+
+ENTRYPOINT go run main.go
