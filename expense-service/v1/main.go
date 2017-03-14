@@ -8,6 +8,7 @@ import (
 	"github.com/gkarlik/expense-tracker/expense-service/v1/proxy"
 	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/quark-go"
+	"github.com/gkarlik/quark-go/circuitbreaker"
 	"github.com/gkarlik/quark-go/data/access/rdbms"
 	"github.com/gkarlik/quark-go/data/access/rdbms/gorm"
 	"github.com/gkarlik/quark-go/logger"
@@ -430,11 +431,21 @@ func (es *ExpenseService) RegisterServiceInstance(server interface{}, serviceIns
 }
 
 func main() {
-	if err := UpgradeDatabase(service); err != nil {
+	cb := &circuitbreaker.DefaultCircuitBreaker{}
+
+	_, err := cb.Execute(func() (interface{}, error) {
+		return nil, UpgradeDatabase(service)
+	}, circuitbreaker.Retry(3), circuitbreaker.Timeout(5*time.Second))
+
+	if err != nil {
 		panic("Cannot upgrade database!")
 	}
 
-	if err := service.Discovery().RegisterService(sd.WithInfo(service.Info())); err != nil {
+	_, err = cb.Execute(func() (interface{}, error) {
+		return nil, service.Discovery().RegisterService(sd.WithInfo(service.Info()))
+	}, circuitbreaker.Retry(3), circuitbreaker.Timeout(10*time.Second))
+
+	if err != nil {
 		service.Log().ErrorWithFields(logger.Fields{
 			"err": err,
 		}, "Cannot register service")
