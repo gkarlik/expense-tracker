@@ -18,9 +18,9 @@ WORKDIR /go/src/github.com/gkarlik/expense-tracker/user-service
 ENV USER_SERVICE_NAME=UserService \
     USER_SERVICE_VERSION=v1 \
     USER_SERVICE_PORT=6666 \
-    DISCOVERY=http://api-gateway:9999 \
+    DISCOVERY=http://api-gateway:8888 \
     DATABASE_DIALECT=postgres \
-    DATABASE="host=database user=postgres dbname=expense_service sslmode=disable password=" \
+    DATABASE="host=database user=postgres dbname=user_service sslmode=disable password=" \
     UPGRADE_DATABASE=1
 
 ENTRYPOINT go run main.go

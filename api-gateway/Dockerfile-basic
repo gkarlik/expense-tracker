@@ -20,6 +20,6 @@ ENV GATEWAY_NAME=ApiGateway \
     GATEWAY_VERSION=v1 \
     GATEWAY_PORT=9999 \
     GATEWAY_SECRET=mysecret \
-    DISCOVERY=localhost:9999   
+    DISCOVERY=api-gateway:8888   
 
 ENTRYPOINT go run main.go

@@ -1,11 +1,11 @@
 version: '2'
-
 services:
     api-gateway:
         build:
             context: ./api-gateway
             dockerfile: Dockerfile-basic
         ports:
+            - "8888:8888"
             - "9999:9999"
         
     expense-service:

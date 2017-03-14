@@ -17,7 +17,7 @@ WORKDIR /go/src/github.com/gkarlik/expense-tracker/expense-service
 ENV EXPENSE_SERVICE_NAME=ExpenseService \
     EXPENSE_SERVICE_VERSION=v1 \
     EXPENSE_SERVICE_PORT=7777 \
-    DISCOVERY=http://api-gateway:9999 \
+    DISCOVERY=http://api-gateway:8888 \
     DATABASE_DIALECT=postgres \
     DATABASE="host=database user=postgres dbname=expense_service sslmode=disable password=" \
     UPGRADE_DATABASE=1
