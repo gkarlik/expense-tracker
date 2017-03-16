@@ -1,6 +1,6 @@
-# Expense Tracker (Backend)
+# Expense Tracker (Back-end)
 
-Purpose of this project is to provide backend services for Expense Tracker application.
+Purpose of this project is to provide back-end services for Expense Tracker application.
 
 ## Running
 
