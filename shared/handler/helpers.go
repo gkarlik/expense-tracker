@@ -9,10 +9,10 @@ import (
 	"github.com/gkarlik/expense-tracker/shared/errors"
 	"github.com/gkarlik/quark-go"
 	auth "github.com/gkarlik/quark-go/middleware/auth/jwt"
+	opentracing "github.com/opentracing/opentracing-go"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
-	opentracing "github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -30,10 +30,10 @@ func GetContextWithSpan(s quark.Service, r *http.Request) context.Context {
 	if span := s.Tracer().SpanFromContext(r.Context()); span != nil {
 		md := metadata.Pairs()
 		if err := s.Tracer().InjectSpan(span, opentracing.TextMap, quark.RPCMetadataCarrier{MD: &md}); err != nil {
-			ctx = metadata.NewContext(context.Background(), md)
+			ctx = metadata.NewOutgoingContext(context.Background(), md)
 		}
 	}
-	return ctx	
+	return ctx
 }
 
 func GetUserID(r *http.Request) string {
@@ -92,8 +92,6 @@ func Response(s quark.Service, w http.ResponseWriter, r *http.Request, in interf
 }
 
 func ErrorResponse(s quark.Service, w http.ResponseWriter, r *http.Request, e *errors.Error, code int) {
-	quark.ReportError(s, r, ErrorKey, ErrorMetricName, e)
-
 	data, err := json.Marshal(e)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

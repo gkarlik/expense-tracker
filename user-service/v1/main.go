@@ -12,7 +12,7 @@ import (
 	"github.com/gkarlik/quark-go/data/access/rdbms"
 	"github.com/gkarlik/quark-go/data/access/rdbms/gorm"
 	"github.com/gkarlik/quark-go/logger"
-	"github.com/gkarlik/quark-go/metrics/noop"
+	"github.com/gkarlik/quark-go/metrics/prometheus"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gkarlik/quark-go/service/discovery/plain"
 	gRPC "github.com/gkarlik/quark-go/service/rpc/grpc"
@@ -50,7 +50,7 @@ func CreateUserService() *UserService {
 			quark.Version(version),
 			quark.Address(addr),
 			quark.Discovery(plain.NewServiceDiscovery(discovery)),
-			quark.Metrics(noop.NewMetricsReporter()),
+			quark.Metrics(prometheus.NewMetricsExposer()),
 			quark.Tracer(nt.NewTracer())),
 	}
 }
@@ -97,7 +97,7 @@ func UpgradeDatabase(s quark.Service) error {
 }
 
 func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) (*proxy.RegisterUserResponse, error) {
-	span := quark.StartRPCSpan(service, "user_service_register_user", ctx)
+	span := quark.StartRPCSpan(ctx, service, "user_service_register_user")
 	defer span.Finish()
 
 	if (proxy.UserRequest{}) == *in {
@@ -151,7 +151,7 @@ func (us *UserService) RegisterUser(ctx context.Context, in *proxy.UserRequest) 
 }
 
 func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCredentialsRequest) (*proxy.UserIDResponse, error) {
-	span := quark.StartRPCSpan(service, "user_service_authenticate_user", ctx)
+	span := quark.StartRPCSpan(ctx, service, "user_service_authenticate_user")
 	defer span.Finish()
 
 	if in.Login == "" {
@@ -185,7 +185,7 @@ func (us *UserService) AuthenticateUser(ctx context.Context, in *proxy.UserCrede
 }
 
 func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest) (*proxy.UserResponse, error) {
-	span := quark.StartRPCSpan(service, "user_service_get_user_by_id", ctx)
+	span := quark.StartRPCSpan(ctx, service, "user_service_get_user_by_id")
 	defer span.Finish()
 
 	if in.ID == "" {
@@ -213,7 +213,7 @@ func (us *UserService) GetUserByID(ctx context.Context, in *proxy.UserIDRequest)
 }
 
 func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRequest) (*proxy.UserResponse, error) {
-	span := quark.StartRPCSpan(service, "user_service_get_user_by_login", ctx)
+	span := quark.StartRPCSpan(ctx, service, "user_service_get_user_by_login")
 	defer span.Finish()
 
 	if in.Login == "" {
@@ -241,7 +241,7 @@ func (us *UserService) GetUserByLogin(ctx context.Context, in *proxy.UserLoginRe
 }
 
 func (us *UserService) UpdateUser(ctx context.Context, in *proxy.UpdateUserRequest) (*proxy.UserResponse, error) {
-	span := quark.StartRPCSpan(service, "user_service_update_user", ctx)
+	span := quark.StartRPCSpan(ctx, service, "user_service_update_user")
 	defer span.Finish()
 
 	if (proxy.UpdateUserRequest{}) == *in {
@@ -324,6 +324,10 @@ func main() {
 	defer func() {
 		server.Dispose()
 		service.Dispose()
+	}()
+
+	go func() {
+		service.Metrics().Expose()
 	}()
 
 	go func() {

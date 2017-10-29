@@ -12,7 +12,7 @@ import (
 	"github.com/gkarlik/quark-go/data/access/rdbms"
 	"github.com/gkarlik/quark-go/data/access/rdbms/gorm"
 	"github.com/gkarlik/quark-go/logger"
-	"github.com/gkarlik/quark-go/metrics/noop"
+	"github.com/gkarlik/quark-go/metrics/prometheus"
 	sd "github.com/gkarlik/quark-go/service/discovery"
 	"github.com/gkarlik/quark-go/service/discovery/plain"
 	gRPC "github.com/gkarlik/quark-go/service/rpc/grpc"
@@ -49,7 +49,7 @@ func CreateExpenseService() *ExpenseService {
 			quark.Version(version),
 			quark.Address(addr),
 			quark.Discovery(plain.NewServiceDiscovery(discovery)),
-			quark.Metrics(noop.NewMetricsReporter()),
+			quark.Metrics(prometheus.NewMetricsExposer()),
 			quark.Tracer(nt.NewTracer())),
 	}
 }
@@ -98,7 +98,7 @@ func UpgradeDatabase(s quark.Service) error {
 }
 
 func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.ExpenseResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_get_expense", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_get_expense")
 	defer span.Finish()
 
 	if in.ID == "" {
@@ -126,7 +126,7 @@ func (es *ExpenseService) GetExpense(ctx context.Context, in *proxy.ExpenseIDReq
 }
 
 func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExpenseRequest) (*proxy.ExpenseResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_create_expense", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_create_expense")
 	defer span.Finish()
 
 	if (proxy.CreateExpenseRequest{}) == *in {
@@ -165,7 +165,7 @@ func (es *ExpenseService) CreateExpense(ctx context.Context, in *proxy.CreateExp
 }
 
 func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExpenseRequest) (*proxy.ExpenseResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_update_expense", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_update_expense")
 	defer span.Finish()
 
 	if (proxy.UpdateExpenseRequest{}) == *in {
@@ -204,7 +204,7 @@ func (es *ExpenseService) UpdateExpense(ctx context.Context, in *proxy.UpdateExp
 }
 
 func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseIDRequest) (*proxy.EmptyResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_remove_expense", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_remove_expense")
 	defer span.Finish()
 
 	if in.ID == "" {
@@ -229,7 +229,7 @@ func (es *ExpenseService) RemoveExpense(ctx context.Context, in *proxy.ExpenseID
 }
 
 func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.ExpensesResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_get_user_expenses", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_get_user_expenses")
 	defer span.Finish()
 
 	if in.Offset < 0 {
@@ -265,7 +265,7 @@ func (es *ExpenseService) GetUserExpenses(ctx context.Context, in *proxy.UserPag
 }
 
 func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.CategoryResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_get_category", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_get_category")
 	defer span.Finish()
 
 	if in.ID == "" {
@@ -291,7 +291,7 @@ func (es *ExpenseService) GetCategory(ctx context.Context, in *proxy.CategoryIDR
 }
 
 func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCategoryRequest) (*proxy.CategoryResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_create_category", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_create_category")
 	defer span.Finish()
 
 	if (proxy.CreateCategoryRequest{}) == *in {
@@ -328,7 +328,7 @@ func (es *ExpenseService) CreateCategory(ctx context.Context, in *proxy.CreateCa
 }
 
 func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCategoryRequest) (*proxy.CategoryResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_update_category", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_update_category")
 	defer span.Finish()
 
 	if (proxy.UpdateCategoryRequest{}) == *in {
@@ -365,7 +365,7 @@ func (es *ExpenseService) UpdateCategory(ctx context.Context, in *proxy.UpdateCa
 }
 
 func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.CategoryIDRequest) (*proxy.EmptyResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_remove_category", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_remove_category")
 	defer span.Finish()
 
 	if in.ID == "" {
@@ -390,7 +390,7 @@ func (es *ExpenseService) RemoveCategory(ctx context.Context, in *proxy.Category
 }
 
 func (es *ExpenseService) GetUserCategories(ctx context.Context, in *proxy.UserPagingRequest) (*proxy.CategoriesResponse, error) {
-	span := quark.StartRPCSpan(service, "expense_service_get_user_categories", ctx)
+	span := quark.StartRPCSpan(ctx, service, "expense_service_get_user_categories")
 	defer span.Finish()
 
 	if in.Offset < 0 {
@@ -458,6 +458,10 @@ func main() {
 	defer func() {
 		server.Dispose()
 		service.Dispose()
+	}()
+
+	go func() {
+		service.Metrics().Expose()
 	}()
 
 	go func() {

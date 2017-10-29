@@ -7,7 +7,7 @@ import (
 	v1 "github.com/gkarlik/expense-tracker/api-gateway/routes/v1"
 	"github.com/gkarlik/quark-go"
 	"github.com/gkarlik/quark-go/logger"
-	"github.com/gkarlik/quark-go/metrics/noop"
+	"github.com/gkarlik/quark-go/metrics/prometheus"
 	"github.com/gkarlik/quark-go/service/discovery/plain"
 	nt "github.com/gkarlik/quark-go/service/trace/noop"
 	"github.com/gorilla/handlers"
@@ -48,7 +48,7 @@ func CreateGateway() *Gateway {
 			quark.Version(version),
 			quark.Address(addr),
 			quark.Discovery(discovery),
-			quark.Metrics(noop.NewMetricsReporter()),
+			quark.Metrics(prometheus.NewMetricsExposer()),
 			quark.Tracer(nt.NewTracer())),
 	}
 	g.Log().SetLevel(logger.DebugLevel)
